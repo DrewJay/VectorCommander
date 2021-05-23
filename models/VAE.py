@@ -2,6 +2,7 @@ from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape
     BatchNormalization, LeakyReLU, Dropout
 from keras.models import Model
 from keras import backend as K
+import settings.constants as constants
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.utils import plot_model
@@ -9,6 +10,10 @@ from utils.callbacks import CustomCallback, step_decay_schedule
 import numpy as np
 import os
 import pickle
+import tensorflow as tf
+
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 class VariationalAutoencoder:
@@ -43,7 +48,7 @@ class VariationalAutoencoder:
         self._build()
 
     def _build(self):
-        # Encoder part
+        # Encoder part.
         encoder_input = Input(shape=self.input_dim, name='encoder_input')
 
         x = encoder_input
@@ -84,7 +89,7 @@ class VariationalAutoencoder:
 
         self.encoder = Model(encoder_input, encoder_output)
 
-        # Decoder part
+        # Decoder part.
         decoder_input = Input(shape=(self.z_dim,), name="decoder_input")
 
         # Before we can reshape to for instance (32, 32, 3) data needs to be in shape (32 x 32 x 3).
@@ -128,31 +133,31 @@ class VariationalAutoencoder:
         self.learning_rate = learning_rate
 
         # Reconstruction loss.
-        def vae_r_loss(y_true, y_pred):
-            # Shape of data is [BATCH_SIZE, IMG_SIZE, IMG_SIZE, CHANNELS]
+        def reconstruction_loss(y_true, y_pred):
+            # Shape of data is [BATCH_SIZE, IMG_SIZE, IMG_SIZE, CHANNELS].
             r_loss = K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
             return r_loss_factor * r_loss
 
         # KL divergence loss.
-        def vae_kl_loss(y_true, y_pred):
+        def kl_divergence_loss(y_true, y_pred):
             kl_loss = -0.5 * K.sum(1 + self.log_var - K.square(self.mu) - K.exp(self.log_var), axis=1)
             return kl_loss
 
         # Combined loss.
-        def vae_loss(y_true, y_pred):
-            r_loss = vae_r_loss(y_true, y_pred)
-            kl_loss = vae_kl_loss(y_true, y_pred)
+        def total_loss(y_true, y_pred):
+            r_loss = reconstruction_loss(y_true, y_pred)
+            kl_loss = kl_divergence_loss(y_true, y_pred)
             return r_loss + kl_loss
 
         optimizer = Adam(lr=learning_rate)
-        self.model.compile(optimizer=optimizer, loss=vae_loss, metrics=[vae_r_loss, vae_kl_loss])
+        self.model.compile(optimizer=optimizer, loss=total_loss, metrics=[reconstruction_loss, kl_divergence_loss])
 
     def save(self, folder):
         if not os.path.exists(folder):
             os.makedirs(folder)
-            os.makedirs(os.path.join(folder, "viz"))
-            os.makedirs(os.path.join(folder, "weights"))
-            os.makedirs(os.path.join(folder, "images"))
+            os.makedirs(os.path.join(folder, constants.NETWORK_VISUALIZATION_FOLDER_NAME))
+            os.makedirs(os.path.join(folder, constants.WEIGHTS_FOLDER_NAME))
+            os.makedirs(os.path.join(folder, constants.SAMPLE_RESULTS_FOLDER_NAME))
 
         with open(os.path.join(folder, "params.pkl"), "wb") as f:
             pickle.dump([
@@ -175,13 +180,13 @@ class VariationalAutoencoder:
 
     def train(self, x_train, batch_size, epochs, run_folder, print_every_n_batches=100, initial_epoch=0, lr_decay=1):
         custom_callback = CustomCallback(run_folder, print_every_n_batches, initial_epoch, self)
-        lr_sched = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
+        lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         checkpoint_filepath = os.path.join(run_folder, "weights/weights-{epoch:03d}-{loss:.2f}.h5")
         checkpoint1 = ModelCheckpoint(checkpoint_filepath, save_weights_only=True, verbose=1)
         checkpoint2 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
 
-        callbacks_list = [checkpoint1, checkpoint2, custom_callback, lr_sched]
+        callbacks_list = [checkpoint1, checkpoint2, custom_callback, lr_schedule]
 
         self.model.fit(
             x_train,
@@ -196,13 +201,13 @@ class VariationalAutoencoder:
     def train_with_generator(self, data_flow, epochs, steps_per_epoch, run_folder, print_every_n_batches=100,
                              initial_epoch=0, lr_decay=1):
         custom_callback = CustomCallback(run_folder, print_every_n_batches, initial_epoch, self)
-        lr_sched = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
+        lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         checkpoint_filepath = os.path.join(run_folder, "weights/weights-{epoch:03d}-{loss:.2f}.h5")
         checkpoint1 = ModelCheckpoint(checkpoint_filepath, save_weights_only=True, verbose=1)
         checkpoint2 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
 
-        callbacks_list = [checkpoint1, checkpoint2, custom_callback, lr_sched]
+        callbacks_list = [checkpoint1, checkpoint2, custom_callback, lr_schedule]
 
         self.model.save_weights(os.path.join(run_folder, "weights/weights.h5"))
 
@@ -216,9 +221,27 @@ class VariationalAutoencoder:
         )
 
     def plot_model(self, run_folder):
-        plot_model(self.model, to_file=os.path.join(run_folder, "viz/model.png"), show_shapes=True,
-                   show_layer_names=True)
-        plot_model(self.encoder, to_file=os.path.join(run_folder, "viz/encoder.png"), show_shapes=True,
-                   show_layer_names=True)
-        plot_model(self.decoder, to_file=os.path.join(run_folder, "viz/decoder.png"), show_shapes=True,
-                   show_layer_names=True)
+        plot_model(
+            self.model,
+            to_file=os.path.join(run_folder, os.path.join(
+                constants.NETWORK_VISUALIZATION_FOLDER_NAME, "model.png")
+            ),
+            show_shapes=True,
+            show_layer_names=True
+        )
+        plot_model(
+            self.encoder,
+            to_file=os.path.join(
+                run_folder, os.path.join(constants.NETWORK_VISUALIZATION_FOLDER_NAME, "encoder.png")
+            ),
+            show_shapes=True,
+            show_layer_names=True
+        )
+        plot_model(
+            self.decoder,
+            to_file=os.path.join(run_folder, os.path.join(
+                constants.NETWORK_VISUALIZATION_FOLDER_NAME, "decoder.png")
+            ),
+            show_shapes=True,
+            show_layer_names=True
+        )

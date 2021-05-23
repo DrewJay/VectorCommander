@@ -1,5 +1,6 @@
 from keras.callbacks import Callback, LearningRateScheduler
 import numpy as np
+import settings.constants as constants
 import matplotlib.pyplot as plt
 import os
 
@@ -11,18 +12,18 @@ class CustomCallback(Callback):
         self.print_every_n_batches = print_every_n_batches
         self.vae = vae
 
-    def on_batch_end(self, batch, logs={}):
-        if batch % self.print_every_n_batches == 0:
+    def on_batch_end(self, batch_index, logs={}):
+        if batch_index % self.print_every_n_batches == 0:
             z_new = np.random.normal(size=(1, self.vae.z_dim))
-            reconst = self.vae.decoder.predict(np.array(z_new))[0].squeeze()
+            reconstructed = self.vae.decoder.predict(np.array(z_new))[0].squeeze()
 
             filepath = os.path.join(
-                self.run_folder, "images", "img_" + str(self.epoch).zfill(3) + "_" + str(batch) + ".jpg"
+                self.run_folder, constants.SAMPLE_RESULTS_FOLDER_NAME, "img_" + str(self.epoch).zfill(3) + "_" + str(batch_index) + ".jpg"
             )
-            if len(reconst.shape) == 2:
-                plt.imsave(filepath, reconst, cmap="gray_r")
+            if len(reconstructed.shape) == 2:
+                plt.imsave(filepath, reconstructed, cmap="gray_r")
             else:
-                plt.imsave(filepath, reconst)
+                plt.imsave(filepath, reconstructed)
 
     def on_epoch_begin(self, epoch, logs={}):
         self.epoch += 1
