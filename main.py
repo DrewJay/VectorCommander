@@ -14,7 +14,7 @@ filenames = np.array(glob(os.path.join(constants.DATA_FOLDER_NAME, "*/*.jpg")))
 IMAGES_AMOUNT = len(filenames)
 
 data_gen = ImageDataGenerator(rescale=1./255)
-# This method loads raw images without any labels in subdirectories of DATA_FOLDER directory.
+# This method loads raw images without any labels in subdirectories of DATA_FOLDER_NAME directory.
 data_flow = data_gen.flow_from_directory(
     constants.DATA_FOLDER_NAME,
     target_size=constants.INPUT_DIM[:2],
@@ -49,6 +49,6 @@ vae.train_with_generator(
     epochs=constants.EPOCHS,
     steps_per_epoch=IMAGES_AMOUNT / constants.BATCH_SIZE,
     run_folder=constants.RUN_FOLDER_NAME,
-    print_every_n_batches=constants.PRINT_EVERY_N_BATCHES,
+    execute_on_nth_batch=constants.EXEC_ON_NTH_BATCH,
     initial_epoch=constants.INITIAL_EPOCH,
 )

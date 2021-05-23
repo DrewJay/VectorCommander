@@ -1,12 +1,11 @@
-from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, \
-    BatchNormalization, LeakyReLU, Dropout
+from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, BatchNormalization, LeakyReLU, Dropout
 from keras.models import Model
 from keras import backend as K
 import settings.constants as constants
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.utils import plot_model
-from utils.callbacks import CustomCallback, step_decay_schedule
+from utils.callbacks import TrainingReferenceReconstructor, step_decay_schedule
 import numpy as np
 import os
 import pickle
@@ -17,6 +16,9 @@ tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 class VariationalAutoencoder:
+    """
+    VAE model class.
+    """
     def __init__(
             self,
             input_dim,
@@ -30,6 +32,19 @@ class VariationalAutoencoder:
             use_batch_norm=False,
             use_dropout=False,
     ):
+        """
+        Class constructor.
+        :param input_dim: Input data dimensions.
+        :param encoder_conv_filters: Encoder convolution filters.
+        :param encoder_conv_kernel_size: Encoder convolution kernel size.
+        :param encoder_conv_strides: Encoder convolution strides.
+        :param decoder_conv_t_filters: Decoder convolution filters.
+        :param decoder_conv_t_kernel_size: Decoder convolution kernel size.
+        :param decoder_conv_t_strides: Decoder convolution strides.
+        :param z_dim: Latent vector shape.
+        :param use_batch_norm: Use batch normalization flag.
+        :param use_dropout: Use dropout layers flag.
+        """
         self.name = "variational_autoencoder"
 
         self.input_dim = input_dim
@@ -48,6 +63,9 @@ class VariationalAutoencoder:
         self._build()
 
     def _build(self):
+        """
+        Create encoder/decoder model, apply constructor parameters into network creation.
+        """
         # Encoder part.
         encoder_input = Input(shape=self.input_dim, name='encoder_input')
 
@@ -130,6 +148,11 @@ class VariationalAutoencoder:
         self.model = Model(model_input, model_output)
 
     def compile(self, learning_rate, r_loss_factor):
+        """
+        Compile the model.
+        :param learning_rate: Learning rate.
+        :param r_loss_factor: Reconstruction loss factor.
+        """
         self.learning_rate = learning_rate
 
         # Reconstruction loss.
@@ -153,6 +176,10 @@ class VariationalAutoencoder:
         self.model.compile(optimizer=optimizer, loss=total_loss, metrics=[reconstruction_loss, kl_divergence_loss])
 
     def save(self, folder):
+        """
+        Serialize model parameters using pickle and save it.
+        :param folder: File to save parameters in.
+        """
         if not os.path.exists(folder):
             os.makedirs(folder)
             os.makedirs(os.path.join(folder, constants.NETWORK_VISUALIZATION_FOLDER_NAME))
@@ -175,18 +202,45 @@ class VariationalAutoencoder:
 
         self.plot_model(folder)
 
+    @staticmethod
+    def load(model_class, folder):
+        """
+        Create model instance and apply input parameters by deserializing pickle file.
+        :param model_class: Class of the model (this).
+        :param folder: Source pkl file.
+        :return: Constructed model.
+        """
+        with open(os.path.join(folder, "params.pkl"), "rb") as f:
+            params = pickle.load(f)
+
+        model = model_class(*params)
+        model.load_weights(os.path.join(folder, "weights/weights.h5"))
+
+        return model
+
     def load_weights(self, filepath):
+        """
+        Load and apply saved weights to model.
+        :param filepath: File where weights are stored.
+        """
         self.model.load_weights(filepath)
 
-    def train(self, x_train, batch_size, epochs, run_folder, print_every_n_batches=100, initial_epoch=0, lr_decay=1):
-        custom_callback = CustomCallback(run_folder, print_every_n_batches, initial_epoch, self)
+    def train(self, x_train, batch_size, epochs, run_folder, execute_on_nth_batch=100, initial_epoch=0, lr_decay=1):
+        """
+        Train the model with regular discrete data.
+        :param x_train: Input train features.
+        :param batch_size: Batch size.
+        :param epochs: Epochs amount.
+        :param run_folder: Run folder path.
+        :param execute_on_nth_batch: Nth batch to execute custom callback on.
+        :param initial_epoch: Initial epoch.
+        :param lr_decay: Learning rate decay.
+        """
+        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on_nth_batch, initial_epoch, self)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
-        checkpoint_filepath = os.path.join(run_folder, "weights/weights-{epoch:03d}-{loss:.2f}.h5")
-        checkpoint1 = ModelCheckpoint(checkpoint_filepath, save_weights_only=True, verbose=1)
-        checkpoint2 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
-
-        callbacks_list = [checkpoint1, checkpoint2, custom_callback, lr_schedule]
+        checkpoint1 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
+        callbacks_list = [checkpoint1, custom_callback, lr_schedule]
 
         self.model.fit(
             x_train,
@@ -198,16 +252,22 @@ class VariationalAutoencoder:
             callbacks=callbacks_list,
         )
 
-    def train_with_generator(self, data_flow, epochs, steps_per_epoch, run_folder, print_every_n_batches=100,
-                             initial_epoch=0, lr_decay=1):
-        custom_callback = CustomCallback(run_folder, print_every_n_batches, initial_epoch, self)
+    def train_with_generator(self, data_flow, epochs, steps_per_epoch, run_folder, execute_on_nth_batch=100, initial_epoch=0, lr_decay=1):
+        """
+        Train the model with dataflow.
+        :param data_flow: Input dataflow.
+        :param epochs: Epochs amount.
+        :param steps_per_epoch: Steps per epoch.
+        :param run_folder: Run folder path.
+        :param execute_on_nth_batch: Nth batch to execute custom callback on.
+        :param initial_epoch: Initial epoch.
+        :param lr_decay: Learning rate decay.
+        """
+        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on_nth_batch, initial_epoch, self)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
-        checkpoint_filepath = os.path.join(run_folder, "weights/weights-{epoch:03d}-{loss:.2f}.h5")
-        checkpoint1 = ModelCheckpoint(checkpoint_filepath, save_weights_only=True, verbose=1)
-        checkpoint2 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
-
-        callbacks_list = [checkpoint1, checkpoint2, custom_callback, lr_schedule]
+        checkpoint1 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
+        callbacks_list = [checkpoint1, custom_callback, lr_schedule]
 
         self.model.save_weights(os.path.join(run_folder, "weights/weights.h5"))
 
@@ -221,6 +281,10 @@ class VariationalAutoencoder:
         )
 
     def plot_model(self, run_folder):
+        """
+        Generate visual graph of this model.
+        :param run_folder: Run folder path.
+        """
         plot_model(
             self.model,
             to_file=os.path.join(run_folder, os.path.join(

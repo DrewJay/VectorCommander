@@ -5,13 +5,13 @@ from scipy.stats import norm
 import settings.constants as constants
 import pandas as pd
 from models.VAE import VariationalAutoencoder
-from utils.loaders import load_model, ImageLabelLoader
+from utils.loaders import ImageLabelLoader
 
 att = pd.read_csv(os.path.join(constants.DATA_FOLDER_NAME, constants.CSV_NAME))
 
 # Exclude channels dim.
 imageLoader = ImageLabelLoader(constants.IMAGE_FOLDER, constants.INPUT_DIM[:2])
-vae = load_model(VariationalAutoencoder, constants.RUN_FOLDER_NAME)
+vae = VariationalAutoencoder.load(VariationalAutoencoder, constants.RUN_FOLDER_NAME)
 data_flow_unlabeled = imageLoader.build(att, 10)
 
 
