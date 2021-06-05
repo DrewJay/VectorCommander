@@ -158,6 +158,7 @@ class VariationalAutoencoder:
         # Reconstruction loss.
         def reconstruction_loss(y_true, y_pred):
             # Shape of data is [BATCH_SIZE, IMG_SIZE, IMG_SIZE, CHANNELS].
+            # Calculates square difference between two images and average pixel value for every batch.
             r_loss = K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
             return r_loss_factor * r_loss
 
