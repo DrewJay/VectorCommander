@@ -4,6 +4,7 @@ import os
 from scipy.stats import norm
 import settings.constants as constants
 import pandas as pd
+import argparse
 from models.VAE import VariationalAutoencoder
 from utils.loaders import ImageLabelLoader
 
@@ -234,11 +235,20 @@ def morph(start_image_file, end_image_file):
     plt.show()
 
 
-# Get particular vectors that represent given attribute.
-found_vec = get_vector_by_label("Finding Labels", "Hernia", constants.ANALYSIS_BATCH_SIZE)
-add_vector_to_images(found_vec, 3)
+parser = argparse.ArgumentParser()
+parser.add_argument("--vector_transition", help="Visualize continuous vector transition")
+parser.add_argument("--col", help="CSV column name to seek label in.")
+parser.add_argument("--val", help="Value of the column")
+parser.add_argument("--samples", help="Choose amount of samples to display", default=3)
 
-# show_distributions()
-# show_random_samples()
-# morph("000238.jpg", "000193.jpg")
+args = parser.parse_args()
 
+if args.vector_transition and args.col and args.val:
+    print('Vector transition mode launched.')
+    print('Simulating ' + args.val + ' vector transition...')
+    found_vec = get_vector_by_label(args.col, args.val, constants.ANALYSIS_BATCH_SIZE)
+    add_vector_to_images(found_vec, args.samples)
+else:
+    print('Illegal argument combination provided.')
+
+# py analysis.py --vector_transition 1 --col "Finding Labels" --val "Hernia"
