@@ -10,7 +10,7 @@ disable_eager_execution()
 
 generative.gen_dirs()
 
-filenames = np.array(glob(os.path.join(constants.DATA_FOLDER_NAME, "*/*.jpg")))
+filenames = np.array(glob(os.path.join(constants.DATA_FOLDER_NAME, "*/*." + constants.DATA_EXTENSION)))
 IMAGES_AMOUNT = len(filenames)
 
 data_gen = ImageDataGenerator(rescale=1./255)

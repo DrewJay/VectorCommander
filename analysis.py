@@ -54,15 +54,16 @@ def show_random_samples():
     plt.show()
 
 
-def get_vector_by_label(label, batch_size):
+def get_vector_by_label(column, label, batch_size):
     """
     Find vector of given label encoded in latent space.
-    :param label: Given label contained in CSV dataset.
+    :param column: Column to search for in CSV dataset.
+    :param label: Given value of column in CSV dataset.
     :param batch_size: Batch size of dataset used to lookup the images with given label.
     :return: A tuple containing unit vector itself and original label value.
     """
     # batch_size = 500.
-    data_flow_label = imageLoader.build(att, batch_size, label=label)
+    data_flow_label = imageLoader.build(att, batch_size, label=column)
 
     current_sum_positive = np.zeros(shape=vae.z_dim, dtype="float32")
     total_vectors_with_attribute = 0
@@ -88,8 +89,8 @@ def get_vector_by_label(label, batch_size):
         
         # Latent vectors of images having given attribute. Example:
         # [z_1, z_2, z_3] chosen using [0, 1, 0] -> z_2 is found.
-        latent_vectors_with_attribute = z[attribute == 1]
-        latent_vectors_without_attribute = z[attribute == -1]
+        latent_vectors_with_attribute = z[attribute == label]
+        latent_vectors_without_attribute = z[attribute == "No Finding"]
 
         if len(latent_vectors_with_attribute) > 0:
             current_sum_positive = current_sum_positive + np.sum(latent_vectors_with_attribute, axis=0)
@@ -128,7 +129,7 @@ def get_vector_by_label(label, batch_size):
             print("Found the " + label + " vector.")
             break
 
-    return label, current_vector
+    return column, label, current_vector
 
 
 def add_vector_to_images(label_vector, samples_amount):
@@ -138,10 +139,10 @@ def add_vector_to_images(label_vector, samples_amount):
     :param samples_amount: The amount of images to apply the vector on.
     """
     steps = samples_amount
-    factors = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-    label, vector = label_vector
+    factors = [0, 1, 2, 3, 4, 5]
+    column, label, vector = label_vector
 
-    att_specific = att[att[label].isin([-1])]
+    att_specific = att[np.logical_not(att[column].isin([label]))]
     att_specific = att_specific.reset_index()
     data_flow_specific = imageLoader.build(att_specific, samples_amount)
 
@@ -182,7 +183,7 @@ def add_vector_to_images(label_vector, samples_amount):
     plt.show()
 
 
-def morph_faces(start_image_file, end_image_file):
+def morph(start_image_file, end_image_file):
     """
     Vectorize start and end image and plot continuous transformation of one to another.
     :param start_image_file: Name of the starting image from dataset (transform from).
@@ -191,7 +192,7 @@ def morph_faces(start_image_file, end_image_file):
     factors = np.arange(0, 1, 0.1)
 
     # Simple way to find csv rows with given image ids.
-    att_specific = att[att["image_id"].isin([start_image_file, end_image_file])]
+    att_specific = att[att["Image Index"].isin([start_image_file, end_image_file])]
     # If we set numeric index for all csv rows, flow_from_dataframe will be able to find images
     # corresponding to given row based on the index.
     att_specific = att_specific.reset_index()
@@ -234,10 +235,10 @@ def morph_faces(start_image_file, end_image_file):
 
 
 # Get particular vectors that represent given attribute.
-mouth_open_vec = get_vector_by_label("Mouth_Slightly_Open", constants.ANALYSIS_BATCH_SIZE)
-add_vector_to_images(mouth_open_vec, 3)
+found_vec = get_vector_by_label("Finding Labels", "Hernia", constants.ANALYSIS_BATCH_SIZE)
+add_vector_to_images(found_vec, 3)
 
 # show_distributions()
 # show_random_samples()
-# morph_faces("000238.jpg", "000193.jpg")
+# morph("000238.jpg", "000193.jpg")
 

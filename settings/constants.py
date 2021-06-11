@@ -9,7 +9,8 @@ IMAGE_FOLDER = "./data/train/images/"
 NETWORK_VISUALIZATION_FOLDER_NAME = "architecture"
 WEIGHTS_FOLDER_NAME = "weights"
 SAMPLE_RESULTS_FOLDER_NAME = "generatedSamples"
-CSV_NAME = "list_attr_celeb.csv"
+CSV_NAME = "Data_Entry_2017_v2020.csv"
+DATA_EXTENSION = "png"
 
 # Training metadata.
 INPUT_DIM = (128, 128, 3)
