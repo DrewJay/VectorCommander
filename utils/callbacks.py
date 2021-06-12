@@ -30,6 +30,7 @@ class TrainingReferenceReconstructor(Callback):
         """
         if batch_index % self.execute_on_nth_batch == 0:
             z_new = np.random.normal(size=(1, self.vae.z_dim))
+            # Remove batch dim because it has only 1 item inside.
             reconstructed = self.vae.decoder.predict(np.array(z_new))[0].squeeze()
 
             filepath = os.path.join(

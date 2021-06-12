@@ -5,6 +5,7 @@ from scipy.stats import norm
 import settings.constants as constants
 import pandas as pd
 import argparse
+from os import path
 from models.VAE import VariationalAutoencoder
 from utils.loaders import ImageLabelLoader
 
@@ -63,6 +64,10 @@ def get_vector_by_label(column, label, batch_size):
     :param batch_size: Batch size of dataset used to lookup the images with given label.
     :return: A tuple containing unit vector itself and original label value.
     """
+
+    if path.isfile(constants.VECTOR_FOLDER + label + ".npy"):
+        return column, label, np.load(constants.VECTOR_FOLDER + label + ".npy")
+
     # batch_size = 500.
     data_flow_label = imageLoader.build(att, batch_size, label=column)
 
@@ -130,6 +135,7 @@ def get_vector_by_label(column, label, batch_size):
             print("Found the " + label + " vector.")
             break
 
+    np.save(constants.VECTOR_FOLDER + label, current_vector)
     return column, label, current_vector
 
 
@@ -162,7 +168,7 @@ def add_vector_to_images(label_vector, samples_amount):
         img = example_images[i].squeeze()
 
         sub = fig.add_subplot(steps, len(factors) + 1, counter)
-        sub.text(0.5, -0.35, "Original", c="red", fontsize=10, ha="center", transform=sub.transAxes)
+        sub.text(0.5, -0.12, "Original", c="red", fontsize=10, ha="center", transform=sub.transAxes)
         sub.axis("off")
 
         sub.imshow(img)
@@ -175,7 +181,7 @@ def add_vector_to_images(label_vector, samples_amount):
 
             img = changed_image.squeeze()
             sub = fig.add_subplot(steps, len(factors) + 1, counter)
-            sub.text(0.5, -0.35, "Factor " + str(factor), c="red", fontsize=10, ha="center", transform=sub.transAxes)
+            sub.text(0.5, -0.12, "Factor " + str(factor), c="red", fontsize=10, ha="center", transform=sub.transAxes)
             sub.axis("off")
             sub.imshow(img)
 

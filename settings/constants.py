@@ -6,6 +6,7 @@ RUN_FOLDER_NAME = ("run/%s/" % WRAPPER_FOLDER_NAME) + "_".join([RUN_ID, RESULTS_
 MODE = "build"
 DATA_FOLDER_NAME = "./data/train/"
 IMAGE_FOLDER = "./data/train/images/"
+VECTOR_FOLDER = "./run/analysis/label_vectors/"
 NETWORK_VISUALIZATION_FOLDER_NAME = "architecture"
 WEIGHTS_FOLDER_NAME = "weights"
 SAMPLE_RESULTS_FOLDER_NAME = "generatedSamples"
