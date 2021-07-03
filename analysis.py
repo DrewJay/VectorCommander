@@ -8,6 +8,8 @@ import argparse
 from os import path
 from models.VAE import VariationalAutoencoder
 from utils.loaders import ImageLabelLoader
+import keras.backend as K
+import math
 
 att = pd.read_csv(os.path.join(constants.DATA_FOLDER_NAME, constants.CSV_NAME))
 
@@ -139,14 +141,16 @@ def get_vector_by_label(column, label, batch_size):
     return column, label, current_vector
 
 
-def add_vector_to_images(label_vector, samples_amount):
+def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_steps=6):
     """
     Add factorized label's vector to random images and plot continuous transformation.
     :param label_vector: Vector of the label to be added to image.
     :param samples_amount: The amount of images to apply the vector on.
+    :param factor_target: Number at which factorization stops (starts at 0).
+    :param factor_steps: How quickly factorization reaches factor_target from 0.
     """
     steps = samples_amount
-    factors = [0, 1, 2, 3, 4, 5]
+    factors = np.linspace(0, factor_target, factor_steps)
     column, label, vector = label_vector
 
     att_specific = att[np.logical_not(att[column].isin([label]))]
@@ -158,35 +162,54 @@ def add_vector_to_images(label_vector, samples_amount):
 
     z_points = vae.encoder.predict(example_images)
 
-    fig = plt.figure(figsize=(18, 10))
-    title = fig.add_subplot()
-    title.text(0, 1, label + " vector addition", c="black", fontsize=15, transform=title.transAxes)
-    title.axis("off")
+    fig = plt.figure(figsize=(15, 5), num="Vector addition")
+    fig2 = plt.figure(figsize=(15, 5), num="Transformation visualization")
+
+    title1 = fig.add_subplot()
+    title1.text(0, 1, label + " vector addition", c="black", fontsize=15, transform=title1.transAxes)
+
+    title2 = fig2.add_subplot()
+    title2.text(0, 1, label + " transformation visualization", c="black", fontsize=15, transform=title2.transAxes)
+
+    title1.axis("off")
+    title2.axis("off")
 
     counter = 1
     for i in range(steps):
-        img = example_images[i].squeeze()
+        img_source = example_images[i].squeeze()
 
         sub = fig.add_subplot(steps, len(factors) + 1, counter)
-        sub.text(0.5, -0.12, "Original", c="red", fontsize=10, ha="center", transform=sub.transAxes)
+        sub.text(0.5, -0.15, "Original", c="red", fontsize=10, ha="center", transform=sub.transAxes)
         sub.axis("off")
 
-        sub.imshow(img)
+        sub.imshow(img_source)
 
         counter += 1
+        img_prev = None
 
-        for factor in factors:
+        for j, factor in enumerate(factors):
             changed_z_point = z_points[i] + vector * factor
             changed_image = vae.decoder.predict(np.array([changed_z_point]))[0]
 
             img = changed_image.squeeze()
+
+            if img_prev is not None:
+                sub2 = fig2.add_subplot(steps, len(factors) - 1, counter - ((i + 1) * 2))
+                sub2.text(0.5, -0.15, "Factor " + str(round(factors[j - 1], 1)) + " -> " + str(round(factors[j], 1)), c="red", fontsize=10, ha="center", transform=sub2.transAxes)
+                sub2.axis("off")
+                diff = K.mean(K.square(img - img_prev), axis=2)
+                sub2.imshow(diff)
+
             sub = fig.add_subplot(steps, len(factors) + 1, counter)
-            sub.text(0.5, -0.12, "Factor " + str(factor), c="red", fontsize=10, ha="center", transform=sub.transAxes)
+            sub.text(0.5, -0.15, "Factor " + str(round(factor, 1)), c="red", fontsize=10, ha="center", transform=sub.transAxes)
             sub.axis("off")
             sub.imshow(img)
 
             counter += 1
+            img_prev = img
 
+    fig.tight_layout()
+    fig2.tight_layout()
     plt.show()
 
 
@@ -242,10 +265,12 @@ def morph(start_image_file, end_image_file):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--vector_transition", help="Visualize continuous vector transition")
+parser.add_argument("--vector_transition", help="Visualize continuous vector transition.")
 parser.add_argument("--col", help="CSV column name to seek label in.")
-parser.add_argument("--val", help="Value of the column")
-parser.add_argument("--samples", help="Choose amount of samples to display", default=3)
+parser.add_argument("--val", help="Value of the column.")
+parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
+parser.add_argument("--f_steps", help="Total amount of factorization steps between 0 and {factor_target}.", type=int, default=6)
+parser.add_argument("--samples", help="Choose amount of samples to display", type=int, default=1)
 
 args = parser.parse_args()
 
@@ -253,8 +278,8 @@ if args.vector_transition and args.col and args.val:
     print('Vector transition mode launched.')
     print('Simulating ' + args.val + ' vector transition...')
     found_vec = get_vector_by_label(args.col, args.val, constants.ANALYSIS_BATCH_SIZE)
-    add_vector_to_images(found_vec, args.samples)
+    add_vector_to_images(found_vec, args.samples, args.f_target, args.f_steps)
 else:
     print('Illegal argument combination provided.')
 
-# py analysis.py --vector_transition 1 --col "Finding Labels" --val "Hernia"
+# py analysis.py --vector_transition 1 --col "Finding Labels" --val "Hernia" --f_target 2 --f_steps 10
