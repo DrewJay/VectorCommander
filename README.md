@@ -32,7 +32,7 @@ given feature (in this case hernia disorder), scaling by factorization and addin
 <figure>
     <img src="https://i.ibb.co/MSTw23V/abs-diff.png"/>
     <figcaption>
-        Fig.2 - Visualization of how result change with increased factorization. Last image represents difference
+        Fig.2 - Visualization of how results change with increased factorization. Last image represents difference
         between factor 0 and 2. Left lung bottom-left expansion is confirmed.
     </figcaption>
 </figure>
