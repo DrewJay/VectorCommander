@@ -38,6 +38,7 @@ given feature (in this case hernia disorder), scaling by factorization and addin
 </figure>
 <br/><br/>
 
+### Side note
 Pixelated character of the image can be improved by
 increasing amount of filters in encoder convolutional layers (currently fixed at 64), increasing latent vector size,
 or using alternative to MSE
