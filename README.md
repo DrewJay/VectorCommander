@@ -25,7 +25,7 @@ given feature (in this case hernia disorder), scaling by factorization and addin
     <img src="https://i.ibb.co/NW3QCcb/factor.png"/>
     <figcaption>
         Fig.1 - Image factorization. Factor 0 is attempt of VAE to recreate original image. Factor f > 0 is image to
-        which was added scaled Hernia vector. Left lung is progressively expanding on bottom-left.
+        which scaled hernia vector was added. Left lung is progressively expanding on bottom-left.
     </figcaption>
 </figure>
 <br/><br/>
