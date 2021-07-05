@@ -35,6 +35,7 @@ given feature (in this case Hernia disorder), scaling by factorization and addin
         between factor 0 and 2. Left lung bottom-left expansion is confirmed.
     </figcaption>
 </figure>
+<br/>
 
 Pixelated character of the image can be improved by
 increasing amount of filters in encoder convolutional layers (currently fixed at 64), increasing latent vector size,
