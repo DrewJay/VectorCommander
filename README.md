@@ -19,7 +19,7 @@ This project includes configurable "vanilla" Variational Autoencoder.
 
 ## Demonstration
 Following image simulates development of hernia on healthy lungs. Simulation is performed by finding unit vector representing
-given feature (in this case Hernia disorder), scaling by factorization and adding it back to original image.
+given feature (in this case hernia disorder), scaling by factorization and adding it back to original image.
 
 <figure>
     <img src="https://i.ibb.co/NW3QCcb/factor.png"/>
