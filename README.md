@@ -22,7 +22,7 @@ Following image simulates development of hernia on healthy lungs. Simulation is 
 given feature (in this case hernia disorder), scaling by factorization and adding it back to original image.
 
 <figure>
-    <img src="https://i.ibb.co/NW3QCcb/factor.png"/>
+    <img src="https://i.ibb.co/gt7H9kh/factor.png"/>
     <figcaption>
         Fig.1 - Image factorization. Factor 0 is attempt of VAE to recreate original image. Factor f > 0 is image to
         which scaled hernia vector was added. Left lung is progressively expanding on bottom-left.
@@ -30,7 +30,7 @@ given feature (in this case hernia disorder), scaling by factorization and addin
 </figure>
 <br/><br/>
 <figure>
-    <img src="https://i.ibb.co/MSTw23V/abs-diff.png"/>
+    <img src="https://i.ibb.co/QQBSb1N/abs-diff.png"/>
     <figcaption>
         Fig.2 - Visualization of how results change with increased factorization. Last image represents difference
         between factor 0 and 2. Left lung bottom-left expansion is confirmed.
