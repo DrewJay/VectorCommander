@@ -175,6 +175,9 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
     title2.axis("off")
 
     counter = 1
+    index_increment = 0
+
+    # Main loop - iterate over total amount of samples in one graph.
     for i in range(steps):
         img_source = example_images[i].squeeze()
 
@@ -186,19 +189,32 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
 
         counter += 1
         img_prev = None
+        img_zero_factor = None
 
         for j, factor in enumerate(factors):
             changed_z_point = z_points[i] + vector * factor
             changed_image = vae.decoder.predict(np.array([changed_z_point]))[0]
 
             img = changed_image.squeeze()
+            img_zero_factor = img if j == 0 else img_zero_factor
 
             if img_prev is not None:
-                sub2 = fig2.add_subplot(steps, len(factors) - 1, counter - ((i + 1) * 2))
+                index = counter - ((i + 1) * 2) + index_increment
+                sub2 = fig2.add_subplot(steps, len(factors), index)
                 sub2.text(0.5, -0.15, "Factor " + str(round(factors[j - 1], 1)) + " -> " + str(round(factors[j], 1)), c="red", fontsize=10, ha="center", transform=sub2.transAxes)
                 sub2.axis("off")
                 diff = K.mean(K.square(img - img_prev), axis=2)
                 sub2.imshow(diff)
+
+                # On last iteration create absolute difference image.
+                if j == len(factors) - 1:
+                    index_increment += 1
+                    sub3 = fig2.add_subplot(steps, len(factors), index + 1)
+                    sub3.text(0.5, -0.15, "Absolute diff", c="purple", fontsize=10, ha="center", transform=sub3.transAxes)
+                    sub3.axis("off")
+
+                    diff_absolute = K.mean(K.square(img - img_zero_factor), axis=2)
+                    sub3.imshow(diff_absolute)
 
             sub = fig.add_subplot(steps, len(factors) + 1, counter)
             sub.text(0.5, -0.15, "Factor " + str(round(factor, 1)), c="red", fontsize=10, ha="center", transform=sub.transAxes)
@@ -281,5 +297,3 @@ if args.vector_transition and args.col and args.val:
     add_vector_to_images(found_vec, args.samples, args.f_target, args.f_steps)
 else:
     print('Illegal argument combination provided.')
-
-# py analysis.py --vector_transition 1 --col "Finding Labels" --val "Hernia" --f_target 2 --f_steps 10

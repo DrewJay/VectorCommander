@@ -1,7 +1,7 @@
 from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, BatchNormalization, LeakyReLU, Dropout
 from keras.models import Model
 from keras import backend as K
-import settings.constants as constants
+from settings import constants
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.utils import plot_model
@@ -90,6 +90,7 @@ class VariationalAutoencoder:
             if self.use_dropout:
                 x = Dropout(rate=0.25)(x)
 
+        # No batch size needed.
         shape_before_flattening = K.int_shape(x)[1:]
 
         x = Flatten()(x)
