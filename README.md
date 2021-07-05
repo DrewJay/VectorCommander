@@ -28,6 +28,7 @@ given feature (in this case Hernia disorder), scaling by factorization and addin
         which was added scaled Hernia vector. Left lung is progressively expanding on bottom-left.
     </figcaption>
 </figure>
+<br/><br/>
 <figure>
     <img src="https://i.ibb.co/MSTw23V/abs-diff.png"/>
     <figcaption>
@@ -35,7 +36,7 @@ given feature (in this case Hernia disorder), scaling by factorization and addin
         between factor 0 and 2. Left lung bottom-left expansion is confirmed.
     </figcaption>
 </figure>
-<br/>
+<br/><br/>
 
 Pixelated character of the image can be improved by
 increasing amount of filters in encoder convolutional layers (currently fixed at 64), increasing latent vector size,
