@@ -28,7 +28,7 @@ class Sampling(Layer):
         """
         super(Sampling, self).__init__(**kwargs)
         self.initializer = initializer
-        self._name = "random_sampling"
+        self._name = "encoder_output"
 
     def call(self, args):
         """
