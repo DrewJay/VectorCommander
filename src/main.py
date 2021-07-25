@@ -52,3 +52,6 @@ vae.train_with_generator(
     execute_on_nth_batch=constants.EXEC_ON_NTH_BATCH,
     initial_epoch=constants.INITIAL_EPOCH,
 )
+
+# Save the model.
+vae.model.save(os.path.join(constants.RUN_FOLDER_NAME, "model"))

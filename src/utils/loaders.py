@@ -27,7 +27,7 @@ class ImageLabelLoader:
         data_gen = ImageDataGenerator(rescale=1. / 255)
         if label:
             # Returns amount_of_images/batch_size tuples where (image_batch, y_col).
-            # If y_col = ["a", "b"] then [[[0, 1], [1, 0]] x batch_size].
+            # If y_col = ["a", "b"] then [[0, 1], [1, 0], ...x batch_size].
             # If y_col = "a" then [0, 1, ...x batch_size].
             # If y_col = None then it's not tuple.
             data_flow = data_gen.flow_from_dataframe(

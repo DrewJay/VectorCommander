@@ -1,4 +1,5 @@
-from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, BatchNormalization, LeakyReLU, Dropout
+from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, BatchNormalization, LeakyReLU, Dropout, Layer
+from keras.initializers import glorot_normal
 from keras.models import Model
 from keras import backend as K
 from settings import constants
@@ -13,6 +14,31 @@ import tensorflow as tf
 
 physical_devices = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
+
+class Sampling(Layer):
+    """
+    Sampling layer definition.
+    """
+    def __init__(self, initializer=glorot_normal, **kwargs):
+        """
+        Constructor.
+        :param initializer: Weights initializer.
+        :param kwargs: Just kwargs.
+        """
+        super(Sampling, self).__init__(**kwargs)
+        self.initializer = initializer
+        self._name = "random_sampling"
+
+    def call(self, args):
+        """
+        Samples from random distribution.
+        :param args: Layer inputs.
+        :return: Generated random distribution.
+        """
+        mu, log_var = args
+        epsilon = K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
+        return mu + K.exp(log_var / 2) * epsilon
 
 
 class VariationalAutoencoder:
@@ -99,14 +125,10 @@ class VariationalAutoencoder:
 
         self.encoder_mu_log_var = Model(encoder_input, (self.mu, self.log_var))
 
-        def sampling(args):
-            mu, log_var = args
-            epsilon = K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
-            return mu + K.exp(log_var / 2) * epsilon
-
-        encoder_output = Lambda(sampling, name="encoder_output")([self.mu, self.log_var])
+        encoder_output = Sampling()([self.mu, self.log_var])
 
         self.encoder = Model(encoder_input, encoder_output)
+        self.encoder._name = "encoder"
 
         # Decoder part.
         decoder_input = Input(shape=(self.z_dim,), name="decoder_input")
@@ -135,11 +157,12 @@ class VariationalAutoencoder:
                 if self.use_dropout:
                     x = Dropout(rate=0.25)(x)
             else:
-                x = Activation('sigmoid')(x)
+                x = Activation('sigmoid', name="sigmoid")(x)
 
         decoder_output = x
 
         self.decoder = Model(decoder_input, decoder_output)
+        self.decoder._name = "decoder"
 
         # Combined model.
         model_input = encoder_input

@@ -9,13 +9,13 @@ from os import path
 from models.VAE import VariationalAutoencoder
 from utils.loaders import ImageLabelLoader
 import keras.backend as K
-import math
 
 att = pd.read_csv(os.path.join(constants.DATA_FOLDER_NAME, constants.CSV_NAME))
 
 # Exclude channels dim.
 imageLoader = ImageLabelLoader(constants.IMAGE_FOLDER, constants.INPUT_DIM[:2])
 vae = VariationalAutoencoder.load(VariationalAutoencoder, constants.RUN_FOLDER_NAME)
+
 data_flow_unlabeled = imageLoader.build(att, 10)
 
 
@@ -71,7 +71,7 @@ def get_vector_by_label(column, label, batch_size):
         return column, label, np.load(constants.VECTOR_FOLDER + label + ".npy")
 
     # batch_size = 500.
-    data_flow_label = imageLoader.build(att, batch_size, label=column)
+    data_flow_labeled = imageLoader.build(att, batch_size, label=column)
 
     current_sum_positive = np.zeros(shape=vae.z_dim, dtype="float32")
     total_vectors_with_attribute = 0
@@ -86,7 +86,7 @@ def get_vector_by_label(column, label, batch_size):
 
     # Until at least 10 images with the attribute.
     while total_vectors_with_attribute < 10:
-        batch = next(data_flow_label)
+        batch = next(data_flow_labeled)
         # (500, 128, 128, 3).
         im = batch[0]
         # (500) because label is defined - 1 attribute for each batch item.

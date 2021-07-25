@@ -4,5 +4,6 @@ run
 src/models/__pycache__
 src/utils/__pycache__
 src/settings/__pycache__
+src/test.py
 .idea
 venv
