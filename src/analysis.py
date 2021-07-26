@@ -281,7 +281,7 @@ def morph(start_image_file, end_image_file):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--vector_transition", help="Visualize continuous vector transition.")
+parser.add_argument("--vector_transition", help="Visualize continuous vector transition.", action="store_true")
 parser.add_argument("--col", help="CSV column name to seek label in.")
 parser.add_argument("--val", help="Value of the column.")
 parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
