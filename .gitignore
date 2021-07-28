@@ -7,3 +7,4 @@ src/settings/__pycache__
 src/test.py
 .idea
 venv
+node_modules

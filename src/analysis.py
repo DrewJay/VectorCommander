@@ -282,6 +282,7 @@ def morph(start_image_file, end_image_file):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--vector_transition", help="Visualize continuous vector transition.", action="store_true")
+parser.add_argument("--vector_lookup", help="Find and save vectors as numpy arrays.", action="store_true")
 parser.add_argument("--col", help="CSV column name to seek label in.")
 parser.add_argument("--val", help="Value of the column.")
 parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
@@ -291,9 +292,13 @@ parser.add_argument("--samples", help="Choose amount of samples to display", typ
 args = parser.parse_args()
 
 if args.vector_transition and args.col and args.val:
-    print('Vector transition mode launched.')
-    print('Simulating ' + args.val + ' vector transition...')
+    print("Vector transition mode launched.")
+    print("Simulating ' + args.val + ' vector transition...")
     found_vec = get_vector_by_label(args.col, args.val, constants.ANALYSIS_BATCH_SIZE)
     add_vector_to_images(found_vec, args.samples, args.f_target, args.f_steps)
+elif args.vector_lookup and args.col and args.val:
+    print("Vector lookup mode launched.")
+    print("Looking for " + args.val + " label.")
+    get_vector_by_label(args.col, args.val, 80)
 else:
-    print('Illegal argument combination provided.')
+    print("Illegal argument combination provided.")
