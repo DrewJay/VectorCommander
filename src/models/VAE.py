@@ -57,6 +57,7 @@ class VariationalAutoencoder:
             z_dim,
             use_batch_norm=False,
             use_dropout=False,
+            discriminative=False
     ):
         """
         Class constructor.
@@ -70,6 +71,7 @@ class VariationalAutoencoder:
         :param z_dim: Latent vector shape.
         :param use_batch_norm: Use batch normalization flag.
         :param use_dropout: Use dropout layers flag.
+        :param discriminative: Use discriminator instead of KL divergence.
         """
         self.name = "variational_autoencoder"
 
@@ -85,6 +87,7 @@ class VariationalAutoencoder:
         self.use_dropout = use_dropout
         self.n_layers_encoder = len(encoder_conv_filters)
         self.n_layers_decoder = len(decoder_conv_t_filters)
+        self.discriminative = discriminative
 
         self._build()
 
@@ -92,6 +95,21 @@ class VariationalAutoencoder:
         """
         Create encoder/decoder model, apply constructor parameters into network creation.
         """
+        # Optional discriminator part.
+        if self.discriminative:
+            discriminator_input = Input(shape=self.z_dim)
+            x = discriminator_input
+
+            x = Dense(512, input_dim=self.z_dim)(x)
+            x = LeakyReLU(alpha=0.2)(x)
+            x = Dense(256)(x)
+            x = LeakyReLU(alpha=0.2)(x)
+            x = Dense(50)(x)
+            x = Dense(1, activation="sigmoid")(x)
+
+            self.discriminator = Model(discriminator_input, x)
+            self.discriminator._name = "discriminator"
+
         # Encoder part.
         encoder_input = Input(shape=self.input_dim, name='encoder_input')
 
@@ -169,7 +187,14 @@ class VariationalAutoencoder:
         # We need symbolic output to join both models.
         model_output = self.decoder(encoder_output)
 
-        self.model = Model(model_input, model_output)
+        # Create discriminative combined model.
+        if self.discriminative:
+            validity = self.discriminator(encoder_output)
+            # Not trainable during combined model training.
+            self.discriminator.trainable = False
+            self.model = Model(model_input, [model_output, validity])
+        else:
+            self.model = Model(model_input, model_output)
 
     def compile(self, learning_rate, r_loss_factor):
         """
@@ -197,8 +222,15 @@ class VariationalAutoencoder:
             kl_loss = kl_divergence_loss(y_true, y_pred)
             return r_loss + kl_loss
 
-        optimizer = Adam(lr=learning_rate)
-        self.model.compile(optimizer=optimizer, loss=total_loss, metrics=[reconstruction_loss, kl_divergence_loss])
+        loss = ['mse', 'binary_crossentropy'] if self.discriminative else total_loss
+        metrics = None if self.discriminative else [reconstruction_loss, kl_divergence_loss]
+
+        # Compile discriminator if present.
+        if self.discriminative:
+            self.discriminator.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate), metrics=['accuracy'])
+
+        # Compile the main model.
+        self.model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
 
     def save(self, folder):
         """

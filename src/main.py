@@ -6,6 +6,7 @@ import utils.generative as generative
 from models.VAE import VariationalAutoencoder
 from keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.framework.ops import disable_eager_execution
+from utils.callbacks import TrainingReferenceReconstructor, step_decay_schedule
 disable_eager_execution()
 
 generative.gen_dirs()
@@ -35,6 +36,7 @@ vae = VariationalAutoencoder(
     z_dim=constants.Z_DIM,
     use_batch_norm=True,
     use_dropout=True,
+    discriminative=True
 )
 
 if constants.MODE == "build":
@@ -44,14 +46,50 @@ else:
 
 vae.compile(constants.LEARNING_RATE, constants.RECONSTRUCTION_LOSS_FACTOR)
 
-vae.train_with_generator(
-    data_flow,
-    epochs=constants.EPOCHS,
-    steps_per_epoch=IMAGES_AMOUNT / constants.BATCH_SIZE,
-    run_folder=constants.RUN_FOLDER_NAME,
-    execute_on_nth_batch=constants.EXEC_ON_NTH_BATCH,
-    initial_epoch=constants.INITIAL_EPOCH,
-)
+# Vanilla VAE training.
+if not vae.discriminative:
+    vae.train_with_generator(
+        data_flow,
+        epochs=constants.EPOCHS,
+        steps_per_epoch=IMAGES_AMOUNT / constants.BATCH_SIZE,
+        run_folder=constants.RUN_FOLDER_NAME,
+        execute_on_nth_batch=constants.EXEC_ON_NTH_BATCH,
+        initial_epoch=constants.INITIAL_EPOCH,
+    )
 
-# Save the model.
-vae.model.save(os.path.join(constants.RUN_FOLDER_NAME, "model"))
+    # Save the model.
+    vae.model.save(os.path.join(constants.RUN_FOLDER_NAME, "model"))
+
+# AAE training.
+else:
+    valid_labels = np.ones((constants.BATCH_SIZE, 1))
+    fake_labels = np.zeros((constants.BATCH_SIZE, 1))
+    callback_invoker = TrainingReferenceReconstructor(constants.RUN_FOLDER_NAME, 0, 0, vae)
+
+    for epoch in range(constants.EPOCHS):
+        images = data_flow.next()
+        callback_invoker.epoch = epoch
+        batch_count = 1
+
+        while np.shape(images)[1] is constants.BATCH_SIZE:
+            image = images[0]
+
+            latent_fake = vae.encoder.predict(image)
+            latent_real = np.random.normal(size=(constants.BATCH_SIZE, constants.Z_DIM))
+
+            # Train discriminator on the batch.
+            disc_loss_real = vae.discriminator.train_on_batch(latent_real, valid_labels)
+            disc_loss_fake = vae.discriminator.train_on_batch(latent_fake, fake_labels)
+            disc_loss = 0.5 * np.add(disc_loss_real, disc_loss_fake)
+
+            # Train combined model on the batch.
+            aae_loss = vae.model.train_on_batch(image, [image, valid_labels])
+
+            # Plot the progress.
+            print("Epoch %d: [Discriminator loss: %f, accuracy: %.2f%%] [Generator loss: %f, mse: %f]" % (epoch, disc_loss[0], 100 * disc_loss[1], aae_loss[0], aae_loss[1]))
+
+            images = data_flow.next()
+            batch_count += 1
+
+        callback_invoker.execute_on_nth_batch = batch_count
+        callback_invoker.on_batch_end(batch_count)

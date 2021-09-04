@@ -9,6 +9,7 @@ from os import path
 from models.VAE import VariationalAutoencoder
 from utils.loaders import ImageLabelLoader
 import keras.backend as K
+import uuid
 
 att = pd.read_csv(os.path.join(constants.DATA_FOLDER_NAME, constants.CSV_NAME))
 
@@ -142,50 +143,21 @@ def get_vector_by_label(column, label, batch_size):
 
 
 def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_steps=6):
-    """
-    Add factorized label's vector to random images and plot continuous transformation.
-    :param label_vector: Vector of the label to be added to image.
-    :param samples_amount: The amount of images to apply the vector on.
-    :param factor_target: Number at which factorization stops (starts at 0).
-    :param factor_steps: How quickly factorization reaches factor_target from 0.
-    """
     steps = samples_amount
     factors = np.linspace(0, factor_target, factor_steps)
     column, label, vector = label_vector
 
-    att_specific = att[np.logical_not(att[column].isin([label]))]
-    att_specific = att_specific.reset_index()
-    data_flow_specific = imageLoader.build(att_specific, samples_amount)
-
-    example_batch = next(data_flow_specific)
-    example_images = example_batch[0]
-
-    z_points = vae.encoder.predict(example_images)
-
-    fig = plt.figure(figsize=(15, 5), num="Vector addition")
-    fig2 = plt.figure(figsize=(15, 5), num="Transformation visualization")
-
-    title1 = fig.add_subplot()
-    title1.text(0, 1, label + " vector addition", c="black", fontsize=15, transform=title1.transAxes)
-
-    title2 = fig2.add_subplot()
-    title2.text(0, 1, label + " transformation visualization", c="black", fontsize=15, transform=title2.transAxes)
-
-    title1.axis("off")
-    title2.axis("off")
+    example_images, z_points = generate_random_image(1, 300, mode=1)
 
     counter = 1
+    id = uuid.uuid4()
     index_increment = 0
 
     # Main loop - iterate over total amount of samples in one graph.
     for i in range(steps):
         img_source = example_images[i].squeeze()
-
-        sub = fig.add_subplot(steps, len(factors) + 1, counter)
-        sub.text(0.5, -0.15, "Original", c="red", fontsize=10, ha="center", transform=sub.transAxes)
-        sub.axis("off")
-
-        sub.imshow(img_source)
+        np.save("../genstorage/" + id + "-ori")
+        np.save();
 
         counter += 1
         img_prev = None
@@ -199,34 +171,16 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
             img_zero_factor = img if j == 0 else img_zero_factor
 
             if img_prev is not None:
-                index = counter - ((i + 1) * 2) + index_increment
-                sub2 = fig2.add_subplot(steps, len(factors), index)
-                sub2.text(0.5, -0.15, "Factor " + str(round(factors[j - 1], 1)) + " -> " + str(round(factors[j], 1)), c="red", fontsize=10, ha="center", transform=sub2.transAxes)
-                sub2.axis("off")
                 diff = K.mean(K.square(img - img_prev), axis=2)
-                sub2.imshow(diff)
+                np.save("../genstorage/" + id + j)
 
                 # On last iteration create absolute difference image.
                 if j == len(factors) - 1:
-                    index_increment += 1
-                    sub3 = fig2.add_subplot(steps, len(factors), index + 1)
-                    sub3.text(0.5, -0.15, "Absolute diff", c="purple", fontsize=10, ha="center", transform=sub3.transAxes)
-                    sub3.axis("off")
-
                     diff_absolute = K.mean(K.square(img - img_zero_factor), axis=2)
-                    sub3.imshow(diff_absolute)
-
-            sub = fig.add_subplot(steps, len(factors) + 1, counter)
-            sub.text(0.5, -0.15, "Factor " + str(round(factor, 1)), c="red", fontsize=10, ha="center", transform=sub.transAxes)
-            sub.axis("off")
-            sub.imshow(img)
+                    np.save("../genstorage/" + id + "-abs")
 
             counter += 1
             img_prev = img
-
-    fig.tight_layout()
-    fig2.tight_layout()
-    plt.show()
 
 
 def morph(start_image_file, end_image_file):
