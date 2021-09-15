@@ -142,10 +142,12 @@ class VariationalAutoencoder:
 
         self.encoder_mu_log_var = Model(encoder_input, (self.mu, self.log_var))
 
-        encoder_output = Sampling()([self.mu, self.log_var])
+        sampling = Sampling()([self.mu, self.log_var])
 
-        self.encoder = Model(encoder_input, encoder_output)
+        self.encoder = Model(encoder_input, sampling)
         self.encoder._name = "encoder"
+
+        encoder_output = self.encoder(encoder_input)
 
         # Decoder part.
         decoder_input = Input(shape=(self.z_dim,), name="decoder_input")
@@ -239,7 +241,6 @@ class VariationalAutoencoder:
         if not os.path.exists(folder):
             os.makedirs(folder)
             os.makedirs(os.path.join(folder, constants.NETWORK_VISUALIZATION_FOLDER_NAME))
-            os.makedirs(os.path.join(folder, constants.WEIGHTS_FOLDER_NAME))
             os.makedirs(os.path.join(folder, constants.SAMPLE_RESULTS_FOLDER_NAME))
 
         with open(os.path.join(folder, "params.pkl"), "wb") as f:
@@ -258,29 +259,6 @@ class VariationalAutoencoder:
 
         self.plot_model(folder)
 
-    @staticmethod
-    def load(model_class, folder):
-        """
-        Create model instance and apply input parameters by deserializing pickle file.
-        :param model_class: Class of the model (this).
-        :param folder: Source pkl file.
-        :return: Constructed model.
-        """
-        with open(os.path.join(folder, "params.pkl"), "rb") as f:
-            params = pickle.load(f)
-
-        model = model_class(*params)
-        model.load_weights(os.path.join(folder, "weights/weights.h5"))
-
-        return model
-
-    def load_weights(self, filepath):
-        """
-        Load and apply saved weights to model.
-        :param filepath: File where weights are stored.
-        """
-        self.model.load_weights(filepath)
-
     def train(self, x_train, batch_size, epochs, run_folder, execute_on_nth_batch=100, initial_epoch=0, lr_decay=1):
         """
         Train the model with regular discrete data.
@@ -295,8 +273,7 @@ class VariationalAutoencoder:
         custom_callback = TrainingReferenceReconstructor(run_folder, execute_on_nth_batch, initial_epoch, self)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
-        checkpoint1 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
-        callbacks_list = [checkpoint1, custom_callback, lr_schedule]
+        callbacks_list = [custom_callback, lr_schedule]
 
         self.model.fit(
             x_train,
@@ -322,10 +299,7 @@ class VariationalAutoencoder:
         custom_callback = TrainingReferenceReconstructor(run_folder, execute_on_nth_batch, initial_epoch, self)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
-        checkpoint1 = ModelCheckpoint(os.path.join(run_folder, "weights/weights.h5"), save_weights_only=True, verbose=1)
-        callbacks_list = [checkpoint1, custom_callback, lr_schedule]
-
-        self.model.save_weights(os.path.join(run_folder, "weights/weights.h5"))
+        callbacks_list = [custom_callback, lr_schedule]
 
         self.model.fit(
             data_flow,

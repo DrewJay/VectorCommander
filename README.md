@@ -1,6 +1,8 @@
 # VectorCommander
 
-This project includes configurable "vanilla" Variational Autoencoder.
+This project includes configurable Variational AutoEncoder. VectorCommander supports
+classical approach using KL-divergence regularization loss, or AAE approach using
+discriminative loss.
 
 ## Model components
 <b>Layers used:</b>
@@ -9,13 +11,11 @@ This project includes configurable "vanilla" Variational Autoencoder.
     <li>Dropout layers (prevent overfitting).</li>
     <li>LeakyRelu activation layers.</li>
     <li>Flatten layer.</li>
+    <li>Custom layer (generating distribution from learned mean and variance).</li>
 </ul>
 
 <b>Losses used:</b>
 <ul><li>Composite loss of Kullback-Leibler divergence and MSE reconstruction.</li></ul>
-
-## Model architecture
-<img src="https://i.ibb.co/TMWjmMB/model.png"/>
 
 ## Demonstration
 Following image simulates development of hernia on healthy lungs. Simulation is performed by finding unit vector representing

@@ -8,7 +8,6 @@ DATA_FOLDER_NAME = "data/train/"
 IMAGE_FOLDER = "data/train/images/"
 VECTOR_FOLDER = "run/analysis/label_vectors/"
 NETWORK_VISUALIZATION_FOLDER_NAME = "architecture"
-WEIGHTS_FOLDER_NAME = "weights"
 SAMPLE_RESULTS_FOLDER_NAME = "generatedSamples"
 CSV_NAME = "Data_Entry_2017_v2020.csv"
 DATA_EXTENSION = "png"
@@ -19,9 +18,12 @@ Z_DIM = 200
 BATCH_SIZE = 32
 LEARNING_RATE = 0.001
 RECONSTRUCTION_LOSS_FACTOR = 10000
-EPOCHS = 100
+EPOCHS = 300
 EXEC_ON_NTH_BATCH = 100
 INITIAL_EPOCH = 0
 
 # Analysis metadata.
 ANALYSIS_BATCH_SIZE = 500
+
+# Various config.
+DISCRIMINATIVE = False

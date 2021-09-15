@@ -25,6 +25,8 @@ data_flow = data_gen.flow_from_directory(
     subset="training",
 )
 
+print("Discriminative mode: " + str(constants.DISCRIMINATIVE))
+
 vae = VariationalAutoencoder(
     input_dim=constants.INPUT_DIM,
     encoder_conv_filters=[32, 64, 64, 64],
@@ -36,7 +38,7 @@ vae = VariationalAutoencoder(
     z_dim=constants.Z_DIM,
     use_batch_norm=True,
     use_dropout=True,
-    discriminative=True
+    discriminative=constants.DISCRIMINATIVE
 )
 
 # Save serialized model params as .pkl file.
