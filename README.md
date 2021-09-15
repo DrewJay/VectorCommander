@@ -1,5 +1,5 @@
 <p align="center">
-    <img style="border-radius:50%" width="300" src="https://i.ibb.co/7VdcHBd/vclogo.png"/>
+    <img width="300" src="https://i.ibb.co/7vR32Bw/vclogo2.png"/>
 </p>
 
 # VectorCommander
