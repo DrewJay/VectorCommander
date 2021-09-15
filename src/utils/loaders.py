@@ -1,5 +1,6 @@
 from keras.preprocessing.image import ImageDataGenerator
 
+
 class ImageLabelLoader:
     """
     Creates image loader using Keras ImageDataGenerator instance.
