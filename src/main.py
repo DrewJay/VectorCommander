@@ -21,7 +21,7 @@ data_flow = data_gen.flow_from_directory(
     target_size=constants.INPUT_DIM[:2],
     batch_size=constants.BATCH_SIZE,
     shuffle=True,
-    class_mode="input",  # Data = [images_batch_1, images_batch_2, images_batch_3, ...].
+    class_mode="input",
     subset="training",
 )
 
@@ -39,11 +39,10 @@ vae = VariationalAutoencoder(
     discriminative=True
 )
 
-if constants.MODE == "build":
-    vae.save(constants.RUN_FOLDER_NAME)
-else:
-    vae.load_weights(os.path.join(constants.RUN_FOLDER_NAME, "weights/weights.h5"))
+# Save serialized model params as .pkl file.
+vae.save(constants.RUN_FOLDER_NAME)
 
+# Compile the model.
 vae.compile(constants.LEARNING_RATE, constants.RECONSTRUCTION_LOSS_FACTOR)
 
 # Vanilla VAE training.
@@ -56,9 +55,6 @@ if not vae.discriminative:
         execute_on_nth_batch=constants.EXEC_ON_NTH_BATCH,
         initial_epoch=constants.INITIAL_EPOCH,
     )
-
-    # Save the model.
-    vae.model.save(os.path.join(constants.RUN_FOLDER_NAME, "model"))
 
 # AAE training.
 else:
@@ -93,3 +89,6 @@ else:
 
         callback_invoker.execute_on_nth_batch = batch_count
         callback_invoker.on_batch_end(batch_count)
+
+# Save the model.
+vae.model.save(os.path.join(constants.RUN_FOLDER_NAME, "model"))
