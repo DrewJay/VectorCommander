@@ -51,7 +51,7 @@ or using alternative to MSE
 reconstruction loss, for example pretrained image recognition model.
 
 Another better performing alternative to classical
-VAEs are Adversarial Autoencoders, which don't use KL Divergence to measure quality of generated probability distribution,
+VAEs are Adversarial AutoEncoders, which don't use KL Divergence to measure quality of generated probability distribution,
 but discriminator model being taught that generated PD is "fake" while standard normal distribution is "real". AAEs yield
 better results by generating more organized latent space.
 
