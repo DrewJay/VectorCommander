@@ -289,14 +289,14 @@ def morph(start_image_file, end_image_file):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--vector_transition", help="Visualize continuous vector transition.", action="store_true")
-parser.add_argument("--vector_lookup", help="Find and save vectors as numpy arrays.", action="store_true")
+parser.add_argument("--vector_lookup", help="Find and save vectors as numpy arrays.", action="store_false")
 parser.add_argument("--column", help="CSV column name to seek label in.")
 parser.add_argument("--label", help="Value of the column.")
 parser.add_argument("--neutral_label", help="Label that doesn't include target state.", type=str, default="No Finding")
 parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
 parser.add_argument("--f_steps", help="Total amount of factorization steps between 0 and {factor_target}.", type=int,
                     default=6)
-parser.add_argument("--samples", help="Choose amount of samples to display", type=int, default=1)
+parser.add_argument("--samples", help="Amount of samples to display.", type=int, default=1)
 
 args = parser.parse_args()
 

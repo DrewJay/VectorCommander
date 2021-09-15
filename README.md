@@ -4,7 +4,9 @@
 
 # VectorCommander
 
-This project includes configurable Variational AutoEncoder. VectorCommander supports
+This project includes configurable Variational AutoEncoder which can be customized and trained.
+Part of the project is also file src/analysis.py which contains utilization of trained model and
+methods performing vector operations over latent spaces. VectorCommander supports
 classical approach using KL-divergence regularization loss, or AAE approach using
 discriminative loss.
 
@@ -52,3 +54,26 @@ Another better performing alternative to classical
 VAEs are Adversarial Autoencoders, which don't use KL Divergence to measure quality of generated probability distribution,
 but discriminator model being taught that generated PD is "fake" while standard normal distribution is "real". AAEs yield
 better results by generating more organized latent space.
+
+## Usage
+You can train your model by choosing your own configuration in src/settings/constants.py
+and then running src/manin.py.
+
+File src/analysis.py contains implementations that utilize trained model and generate
+visual results using matplotlib. It accepts following arguments:
+
+Argument | Description | Type | Default value |
+--- | --- | --- | --- |
+vector_transition | Visualize continuous vector transition. | positional | N/A |
+vector_lookup | Find and save vectors as numpy arrays. | positional | N/A |
+column | CSV column name to seek label in. | str | N/A |
+label | Value of the column. | str | N/A |
+neutral_label | Label that doesn't include target state. | str | "No Finding" |
+f_target | Target value of factorization. | int | 5 |
+f_steps | Total amount of factorization steps between 0 and {f_target}. | int | 6 |
+samples | Amount of samples to display. | int | 1 |
+
+This line was used to generate results in Demonstration section:
+```
+py src/analysis.py --vector_transition --column "Finding Labels" --label "Hernia" --f_target 2 --f_steps 10 --samples 2
+```
