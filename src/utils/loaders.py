@@ -27,9 +27,8 @@ class ImageLabelLoader:
         data_gen = ImageDataGenerator(rescale=1. / 255)
         if label:
             # Returns amount_of_images/batch_size tuples where (image_batch, y_col).
-            # If y_col = ["a", "b"] then [[0, 1], [1, 0], ...x batch_size].
-            # If y_col = "a" then [0, 1, ...x batch_size].
-            # If y_col = None then it's not tuple.
+            # If y_col = ["a", "b"] then [[0, 1], [1, 0], ...x batch_size] a.k.a (batch_size, 2).
+            # If y_col = "a" then [0, 1, ...x batch_size] a.k.a (batch_size).
             data_flow = data_gen.flow_from_dataframe(
                 csv_data,  # Pandas CSV containing data information.
                 self.image_folder,  # Where to look for images.
@@ -41,6 +40,8 @@ class ImageLabelLoader:
                 shuffle=True,
             )
         else:
+            # "input" class mode means that second item in the tuple
+            # is the same image batch as first item a.k.a (batch_size, w, h, c).
             data_flow = data_gen.flow_from_dataframe(
                 csv_data,
                 self.image_folder,
