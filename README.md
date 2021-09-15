@@ -1,4 +1,4 @@
-# Plotz
+# VectorCommander
 
 This project includes configurable "vanilla" Variational Autoencoder.
 
