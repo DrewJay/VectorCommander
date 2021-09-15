@@ -104,7 +104,6 @@ class VariationalAutoencoder:
             x = LeakyReLU(alpha=0.2)(x)
             x = Dense(256)(x)
             x = LeakyReLU(alpha=0.2)(x)
-            x = Dense(50)(x)
             x = Dense(1, activation="sigmoid")(x)
 
             self.discriminator = Model(discriminator_input, x)

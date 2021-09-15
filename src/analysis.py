@@ -59,11 +59,12 @@ def show_random_samples():
     plt.show()
 
 
-def get_vector_by_label(column, label, batch_size):
+def get_vector_by_label(column, label, neutral_label, batch_size):
     """
     Find vector of given label encoded in latent space.
     :param column: Column to search for in CSV dataset.
     :param label: Given value of column in CSV dataset.
+    :param neutral_label: Label that doesn't include target state.
     :param batch_size: Batch size of dataset used to lookup the images with given label.
     :return: A tuple containing unit vector itself and original label value.
     """
@@ -99,7 +100,7 @@ def get_vector_by_label(column, label, batch_size):
         # Latent vectors of images having given attribute. Example:
         # [z_1, z_2, z_3] chosen using [0, 1, 0] -> z_2 is found.
         latent_vectors_with_attribute = z[attribute == label]
-        latent_vectors_without_attribute = z[attribute == "No Finding"]
+        latent_vectors_without_attribute = z[attribute == neutral_label]
 
         if len(latent_vectors_with_attribute) > 0:
             current_sum_positive = current_sum_positive + np.sum(latent_vectors_with_attribute, axis=0)
@@ -237,22 +238,23 @@ def morph(start_image_file, end_image_file):
 parser = argparse.ArgumentParser()
 parser.add_argument("--vector_transition", help="Visualize continuous vector transition.", action="store_true")
 parser.add_argument("--vector_lookup", help="Find and save vectors as numpy arrays.", action="store_true")
-parser.add_argument("--col", help="CSV column name to seek label in.")
-parser.add_argument("--val", help="Value of the column.")
+parser.add_argument("--column", help="CSV column name to seek label in.")
+parser.add_argument("--label", help="Value of the column.")
+parser.add_argument("--neutral_label", help="Label not including target state.", type=str, default="No Finding")
 parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
 parser.add_argument("--f_steps", help="Total amount of factorization steps between 0 and {factor_target}.", type=int, default=6)
 parser.add_argument("--samples", help="Choose amount of samples to display", type=int, default=1)
 
 args = parser.parse_args()
 
-if args.vector_transition and args.col and args.val:
+if args.vector_transition and args.column and args.label:
     print("Vector transition mode launched.")
-    print("Simulating ' + args.val + ' vector transition...")
-    found_vec = get_vector_by_label(args.col, args.val, constants.ANALYSIS_BATCH_SIZE)
+    print("Simulating ' + args.label + ' vector transition...")
+    found_vec = get_vector_by_label(args.column, args.label, args.neutral_label, constants.ANALYSIS_BATCH_SIZE)
     add_vector_to_images(found_vec, args.samples, args.f_target, args.f_steps)
-elif args.vector_lookup and args.col and args.val:
+elif args.vector_lookup and args.column and args.label:
     print("Vector lookup mode launched.")
-    print("Looking for " + args.val + " label.")
-    get_vector_by_label(args.col, args.val, 80)
+    print("Looking for " + args.label + " label.")
+    get_vector_by_label(args.column, args.label, args.neutral_label, 80)
 else:
     print("Illegal argument combination provided.")
