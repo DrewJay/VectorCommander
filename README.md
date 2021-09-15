@@ -1,3 +1,7 @@
+<p align="center">
+    <img width="300" src="https://i.ibb.co/7VdcHBd/vclogo.png"/>
+</p>
+
 # VectorCommander
 
 This project includes configurable Variational AutoEncoder. VectorCommander supports
