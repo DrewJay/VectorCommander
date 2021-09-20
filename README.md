@@ -57,7 +57,7 @@ better results by generating more organized latent space.
 
 ## Usage
 You can train your model by choosing your own configuration in src/settings/constants.py
-and then running src/manin.py.
+and then running src/main.py.
 
 File src/analysis.py contains implementations that utilize trained model and generate
 visual results using matplotlib. It accepts following arguments:
