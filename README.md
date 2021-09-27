@@ -5,7 +5,7 @@
 # VectorCommander
 
 This project includes configurable Variational Autoencoder which can be customized and trained. It is implemented using modern approaches, like
-discriminative regularization and <a href="https://arxiv.org/abs/1512.03385">residual convolution blocks</a>.
+discriminative regularization and <a href="https://arxiv.org/abs/1512.03385">residual convolutional blocks</a>.
 
 Part of the project is also file src/analysis.py which contains code for utilization of trained model and
 methods performing vector operations over latent spaces.
