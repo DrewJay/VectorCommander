@@ -4,20 +4,21 @@
 
 # VectorCommander
 
-This project includes configurable Variational AutoEncoder which can be customized and trained.
-Part of the project is also file src/analysis.py which contains utilization of trained model and
-methods performing vector operations over latent spaces. VectorCommander supports
-classical approach using KL-divergence regularization loss, or AAE approach using
-discriminative loss.
+This project includes configurable Variational Autoencoder which can be customized and trained. It is implemented using modern approaches, like
+discriminative regularization and <a href="https://arxiv.org/abs/1512.03385">residual convolution blocks</a>.
+
+Part of the project is also file src/analysis.py which contains code for utilization of trained model and
+methods performing vector operations over latent spaces.
 
 ## Model components
 <b>Layers used:</b>
 <ul>
-    <li>Classical convolutional layers.</li>
-    <li>Dropout layers (prevent overfitting).</li>
-    <li>LeakyRelu activation layers.</li>
-    <li>Flatten layer.</li>
-    <li>Custom layer (generating distribution from learned mean and variance).</li>
+    <li>Classical convolutional layers</li>
+    <li>Dropout layers (prevent overfitting)</li>
+    <li>LeakyRelu activation layers</li>
+    <li>Flatten layer</li>
+    <li>BatchNormalization layer</li>
+    <li>Custom layer (generating Multivariate Gaussian)</li>
 </ul>
 
 <b>Losses used:</b>
