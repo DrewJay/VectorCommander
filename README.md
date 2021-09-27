@@ -22,7 +22,7 @@ methods performing vector operations over latent spaces.
 </ul>
 
 <b>Losses used:</b>
-<ul><li>Composite loss of Kullback-Leibler divergence and MSE reconstruction.</li></ul>
+<ul><li>Composite loss of Kullback-Leibler divergence and MSE reconstruction or dynamic discriminative loss.</li></ul>
 
 ## Demonstration
 Following image simulates development of hernia on healthy lungs. Simulation is performed by finding unit vector representing
