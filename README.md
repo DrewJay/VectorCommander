@@ -16,9 +16,9 @@ methods performing vector operations over latent spaces.
     <li>Classical convolutional layers</li>
     <li>Dropout layers (prevent overfitting)</li>
     <li>LeakyRelu activation layers</li>
-    <li>Flatten layer</li>
-    <li>BatchNormalization layer</li>
-    <li>Custom layer (generating Multivariate Gaussian)</li>
+    <li>Flatten layers</li>
+    <li>BatchNormalization layers</li>
+    <li>Custom layers (generating Multivariate Gaussian)</li>
 </ul>
 
 <b>Losses used:</b>
