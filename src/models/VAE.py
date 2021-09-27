@@ -1,4 +1,4 @@
-from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, BatchNormalization, LeakyReLU, Dropout, Layer
+from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, Reshape, Lambda, Activation, BatchNormalization, LeakyReLU, Dropout, Layer, Add
 from keras.initializers import glorot_normal
 from keras.models import Model
 from keras import backend as K
@@ -91,6 +91,49 @@ class VariationalAutoencoder:
 
         self._build()
 
+    def create_residual_block(self, x, index):
+        """
+        Instead of using classical convolutional block, generate
+        residual one.
+        :param x: Input tensor.
+        :param index: Block index.
+        :return: Built residual block.
+        """
+        y = Conv2D(
+            filters=self.encoder_conv_filters[index],
+            kernel_size=self.encoder_conv_kernel_size[index],
+            strides=self.encoder_conv_strides[index],
+            padding="same",
+            name="encoder_conv_" + str(index),
+        )(x)
+        y = LeakyReLU()(y)
+        y = BatchNormalization()(y)
+
+        y = Conv2D(
+            filters=self.encoder_conv_filters[index],
+            kernel_size=self.encoder_conv_kernel_size[index],
+            strides=1,
+            padding="same",
+            name="encoder_conv_" + str(index) + "_2",
+        )(y)
+
+        if self.encoder_conv_strides[index]:
+            x = Conv2D(
+                kernel_size=1,
+                strides=self.encoder_conv_strides[index],
+                filters=self.encoder_conv_filters[index],
+                padding="same"
+            )(x)
+
+        out = Add()([x, y])
+        out = LeakyReLU()(out)
+        out = BatchNormalization()(out)
+
+        if self.use_dropout:
+            out = Dropout(rate=0.25)(out)
+
+        return out
+
     def _build(self):
         """
         Create encoder/decoder model, apply constructor parameters into network creation.
@@ -104,7 +147,7 @@ class VariationalAutoencoder:
             x = LeakyReLU(alpha=0.2)(x)
             x = Dense(256)(x)
             x = LeakyReLU(alpha=0.2)(x)
-            x = Dense(1, activation="sigmoid")(x)
+            x = Dense(1, activation="ReLu")(x)
 
             self.discriminator = Model(discriminator_input, x)
             self.discriminator._name = "discriminator"
@@ -115,23 +158,7 @@ class VariationalAutoencoder:
         x = encoder_input
 
         for i in range(self.n_layers_encoder):
-            conv_layer = Conv2D(
-                filters=self.encoder_conv_filters[i],
-                kernel_size=self.encoder_conv_kernel_size[i],
-                strides=self.encoder_conv_strides[i],
-                padding="same",
-                name="encoder_conv_" + str(i),
-            )
-
-            x = conv_layer(x)
-
-            if self.use_batch_norm:
-                x = BatchNormalization()(x)
-
-            x = LeakyReLU()(x)
-
-            if self.use_dropout:
-                x = Dropout(rate=0.25)(x)
+            x = self.create_residual_block(x=x, index=i)
 
         # No batch size needed.
         shape_before_flattening = K.int_shape(x)[1:]
@@ -233,44 +260,18 @@ class VariationalAutoencoder:
         # Compile the main model.
         self.model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
 
-    def save(self, folder):
-        """
-        Serialize model parameters using pickle and save it.
-        :param folder: File to save parameters in.
-        """
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-            os.makedirs(os.path.join(folder, constants.NETWORK_VISUALIZATION_FOLDER_NAME))
-            os.makedirs(os.path.join(folder, constants.SAMPLE_RESULTS_FOLDER_NAME))
-
-        with open(os.path.join(folder, "params.pkl"), "wb") as f:
-            pickle.dump([
-                self.input_dim,
-                self.encoder_conv_filters,
-                self.encoder_conv_kernel_size,
-                self.encoder_conv_strides,
-                self.decoder_conv_t_filters,
-                self.decoder_conv_t_kernel_size,
-                self.decoder_conv_t_strides,
-                self.z_dim,
-                self.use_batch_norm,
-                self.use_dropout,
-            ], f)
-
-        self.plot_model(folder)
-
-    def train(self, x_train, batch_size, epochs, run_folder, execute_on_nth_batch=100, initial_epoch=0, lr_decay=1):
+    def train(self, x_train, batch_size, epochs, run_folder, execute_on=(100, 1), initial_epoch=0, lr_decay=1):
         """
         Train the model with regular discrete data.
         :param x_train: Input train features.
         :param batch_size: Batch size.
         :param epochs: Epochs amount.
         :param run_folder: Run folder path.
-        :param execute_on_nth_batch: Nth batch to execute custom callback on.
+        :param execute_on: Nth batch/epoch to execute custom callback on.
         :param initial_epoch: Initial epoch.
         :param lr_decay: Learning rate decay.
         """
-        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on_nth_batch, initial_epoch, self)
+        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         callbacks_list = [custom_callback, lr_schedule]
@@ -285,18 +286,18 @@ class VariationalAutoencoder:
             callbacks=callbacks_list,
         )
 
-    def train_with_generator(self, data_flow, epochs, steps_per_epoch, run_folder, execute_on_nth_batch=100, initial_epoch=0, lr_decay=1):
+    def train_with_generator(self, data_flow, epochs, steps_per_epoch, run_folder, execute_on=(100, 1), initial_epoch=0, lr_decay=1):
         """
         Train the model with dataflow.
         :param data_flow: Input dataflow.
         :param epochs: Epochs amount.
         :param steps_per_epoch: Steps per epoch.
         :param run_folder: Run folder path.
-        :param execute_on_nth_batch: Nth batch to execute custom callback on.
+        :param execute_on: Nth batch/epoch to execute custom callback on.
         :param initial_epoch: Initial epoch.
         :param lr_decay: Learning rate decay.
         """
-        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on_nth_batch, initial_epoch, self)
+        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         callbacks_list = [custom_callback, lr_schedule]

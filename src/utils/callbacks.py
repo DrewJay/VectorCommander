@@ -9,17 +9,17 @@ class TrainingReferenceReconstructor(Callback):
     """
     Custom callback generating random samples using decoder during training.
     """
-    def __init__(self, run_folder, execute_on_nth_batch, initial_epoch, vae):
+    def __init__(self, run_folder, execute_on, initial_epoch, vae):
         """
         Class constructor.
         :param run_folder: Run folder path.
-        :param execute_on_nth_batch: Execute callback on every nth batch.
+        :param execute_on: Execute callback on every nth batch/epoch.
         :param initial_epoch: Initial epoch index.
         :param vae: VAE model reference.
         """
         self.epoch = initial_epoch
         self.run_folder = run_folder
-        self.execute_on_nth_batch = execute_on_nth_batch
+        self.execute_on = execute_on
         self.vae = vae
 
     def on_batch_end(self, batch_index, logs={}):
@@ -28,7 +28,9 @@ class TrainingReferenceReconstructor(Callback):
         :param batch_index: Current batch index.
         :param logs: Metrics results logs.
         """
-        if batch_index % self.execute_on_nth_batch == 0:
+        exec_on_batch, exec_on_epoch = self.execute_on
+
+        if batch_index % exec_on_batch == 0 and self.epoch % exec_on_epoch == 0:
             z_new = np.random.normal(size=(1, self.vae.z_dim))
             # Remove batch dim because it has only 1 item inside.
             reconstructed = self.vae.decoder.predict(np.array(z_new))[0].squeeze()

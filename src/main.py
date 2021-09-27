@@ -29,7 +29,7 @@ print("Discriminative mode: " + str(constants.DISCRIMINATIVE))
 
 vae = VariationalAutoencoder(
     input_dim=constants.INPUT_DIM,
-    encoder_conv_filters=[32, 64, 64, 64],
+    encoder_conv_filters=[32, 64, 64, 128],
     encoder_conv_kernel_size=[3, 3, 3, 3],
     encoder_conv_strides=[2, 2, 2, 2],
     decoder_conv_t_filters=[64, 64, 32, 3],
@@ -41,9 +41,6 @@ vae = VariationalAutoencoder(
     discriminative=constants.DISCRIMINATIVE
 )
 
-# Save serialized model params as .pkl file.
-vae.save(constants.RUN_FOLDER_NAME)
-
 # Compile the model.
 vae.compile(constants.LEARNING_RATE, constants.RECONSTRUCTION_LOSS_FACTOR)
 
@@ -54,7 +51,7 @@ if not vae.discriminative:
         epochs=constants.EPOCHS,
         steps_per_epoch=IMAGES_AMOUNT / constants.BATCH_SIZE,
         run_folder=constants.RUN_FOLDER_NAME,
-        execute_on_nth_batch=constants.EXEC_ON_NTH_BATCH,
+        execute_on=(constants.EXEC_ON_NTH_BATCH, constants.EXEC_ON_NTH_EPOCH),
         initial_epoch=constants.INITIAL_EPOCH,
     )
 
