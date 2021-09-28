@@ -109,6 +109,7 @@ class VariationalAutoencoder:
         y = LeakyReLU()(y)
         y = BatchNormalization()(y)
 
+        # Extract information.
         y = Conv2D(
             filters=self.encoder_conv_filters[index],
             kernel_size=self.encoder_conv_kernel_size[index],
@@ -117,7 +118,8 @@ class VariationalAutoencoder:
             name="encoder_conv_" + str(index) + "_2",
         )(y)
 
-        if self.encoder_conv_strides[index]:
+        # If y was downsampled, x has to be too, so we can add it.
+        if self.encoder_conv_strides[index] > 1:
             x = Conv2D(
                 kernel_size=1,
                 strides=self.encoder_conv_strides[index],
