@@ -6,7 +6,7 @@ import utils.generative as generative
 from models.VAE import VariationalAutoencoder
 from keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.framework.ops import disable_eager_execution
-from utils.callbacks import TrainingReferenceReconstructor, step_decay_schedule
+from utils.callbacks import TrainingReferenceReconstructor
 disable_eager_execution()
 
 generative.gen_dirs()

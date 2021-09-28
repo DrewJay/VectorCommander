@@ -126,7 +126,7 @@ class VariationalAutoencoder:
                 padding="same"
             )(x)
 
-        out = BatchNormalization()(out)
+        y = BatchNormalization()(y)
         out = Add()([x, y])
         out = LeakyReLU()(out)
 
@@ -272,7 +272,7 @@ class VariationalAutoencoder:
         :param initial_epoch: Initial epoch.
         :param lr_decay: Learning rate decay.
         """
-        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self)
+        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self, constants.PLOT_TRAINING_LOSS)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         callbacks_list = [custom_callback, lr_schedule]
@@ -298,7 +298,7 @@ class VariationalAutoencoder:
         :param initial_epoch: Initial epoch.
         :param lr_decay: Learning rate decay.
         """
-        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self)
+        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self, constants.PLOT_TRAINING_LOSS)
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         callbacks_list = [custom_callback, lr_schedule]
