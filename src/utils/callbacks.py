@@ -16,7 +16,7 @@ class TrainingReferenceReconstructor(Callback):
         :param execute_on: Execute callback on every nth batch/epoch.
         :param initial_epoch: Initial epoch index.
         :param vae: VAE model reference.
-        :param show_loss_plot: Show loss plot during training.
+        :param plot_training_loss: Show loss plot during training.
         """
         self.epoch = initial_epoch
         self.run_folder = run_folder
@@ -26,18 +26,28 @@ class TrainingReferenceReconstructor(Callback):
 
         # Plot data references.
         self.loss = []
-        self.r_loss = []
         self.kl_loss = []
+
+        self.disc_loss = []
+        self.gaussian_loss = []
+
+        self.r_loss = []
         self.epochs = []
 
         # Prepare graphs.
-        fig, axs = plt.subplot_mosaic([["Total", "Reconstruction"], ["Total", "KL"]], constrained_layout=True)
+        if self.vae.discriminative:
+            fig, axs = plt.subplot_mosaic([["Discriminative", "Reconstruction"], ["Discriminative", "Gaussian"]], constrained_layout=True)
+            self.disc_loss_plot = axs["Discriminative"]
+            self.gaussian_loss_plot = axs["Gaussian"]
+        else:
+            fig, axs = plt.subplot_mosaic([["Total", "Reconstruction"], ["Total", "KL"]], constrained_layout=True)
+            self.loss_plot = axs["Total"]
+            self.kl_loss_plot = axs["KL"]
+
+        self.r_loss_plot = axs["Reconstruction"]
+
         fig.suptitle("Training Loss Evaluation", fontsize=16)
         fig.canvas.set_window_title("Training Loss Evaluation")
-
-        self.loss_plot = axs["Total"]
-        self.r_loss_plot = axs["Reconstruction"]
-        self.kl_loss_plot = axs["KL"]
 
         plt.ion()
 
@@ -49,7 +59,7 @@ class TrainingReferenceReconstructor(Callback):
         """
         exec_on_batch, exec_on_epoch = self.execute_on
 
-        if batch_index % exec_on_batch == 0 and self.epoch % exec_on_epoch == 0:
+        if batch_index % exec_on_batch == 0 and (exec_on_epoch is not None and self.epoch % exec_on_epoch == 0):
             z_new = np.random.normal(size=(1, self.vae.z_dim))
             # Remove batch dim because it has only 1 item inside.
             reconstructed = self.vae.decoder.predict(np.array(z_new))[0].squeeze()
@@ -78,26 +88,45 @@ class TrainingReferenceReconstructor(Callback):
         :param logs: Metric logs.
         """
         if self.plot_training_loss:
-            self.loss.append(logs["loss"])
-            self.r_loss.append(logs["reconstruction_loss"])
-            self.kl_loss.append(logs["kl_divergence_loss"])
             self.epochs.append(epoch)
 
-            self.loss_plot.cla()
+            self.r_loss.append(logs["reconstruction_loss"])
             self.r_loss_plot.cla()
-            self.kl_loss_plot.cla()
-
-            self.loss_plot.plot(self.epochs, self.loss, label="Total loss")
-            self.loss_plot.text(0.5, 0.5, str(round(logs["loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.loss_plot.transAxes)
-            self.loss_plot.legend()
 
             self.r_loss_plot.plot(self.epochs, self.r_loss, 'g', label="Reconstruction Loss")
             self.r_loss_plot.text(0.5, 0.5, str(round(logs["reconstruction_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.r_loss_plot.transAxes)
             self.r_loss_plot.legend()
 
-            self.kl_loss_plot.plot(self.epochs, self.kl_loss, 'r', label="Gaussian Loss")
-            self.kl_loss_plot.text(0.5, 0.5, str(round(logs["kl_divergence_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.kl_loss_plot.transAxes)
-            self.kl_loss_plot.legend()
+            # AAE graphs.
+            if self.vae.discriminative:
+                self.gaussian_loss.append(logs["gaussian_loss"])
+                self.disc_loss.append(logs["disc_loss"])
+
+                self.gaussian_loss_plot.cla()
+                self.disc_loss_plot.cla()
+
+                self.gaussian_loss_plot.plot(self.epochs, self.gaussian_loss, label="Gaussian loss")
+                self.gaussian_loss_plot.text(0.5, 0.5, str(round(logs["gaussian_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.gaussian_loss_plot.transAxes)
+                self.gaussian_loss_plot.legend()
+
+                self.disc_loss_plot.plot(self.epochs, self.disc_loss, label="Discriminative loss")
+                self.disc_loss_plot.text(0.5, 0.5, str(round(logs["disc_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.disc_loss_plot.transAxes)
+                self.disc_loss_plot.legend()
+            # Classical graphs.
+            else:
+                self.loss.append(logs["loss"])
+                self.kl_loss.append(logs["kl_divergence_loss"])
+
+                self.loss_plot.cla()
+                self.kl_loss_plot.cla()
+
+                self.loss_plot.plot(self.epochs, self.loss, label="Total loss")
+                self.loss_plot.text(0.5, 0.5, str(round(logs["loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.loss_plot.transAxes)
+                self.loss_plot.legend()
+
+                self.kl_loss_plot.plot(self.epochs, self.kl_loss, 'r', label="Gaussian Loss")
+                self.kl_loss_plot.text(0.5, 0.5, str(round(logs["kl_divergence_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.kl_loss_plot.transAxes)
+                self.kl_loss_plot.legend()
 
             plt.pause(0.0001)
             plt.show()

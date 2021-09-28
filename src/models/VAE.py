@@ -148,7 +148,7 @@ class VariationalAutoencoder:
             x = LeakyReLU(alpha=0.2)(x)
             x = Dense(256)(x)
             x = LeakyReLU(alpha=0.2)(x)
-            x = Dense(1, activation="ReLu")(x)
+            x = Dense(1, activation="relu")(x)
 
             self.discriminator = Model(discriminator_input, x)
             self.discriminator._name = "discriminator"
@@ -251,12 +251,12 @@ class VariationalAutoencoder:
             kl_loss = kl_divergence_loss(y_true, y_pred)
             return r_loss + kl_loss
 
-        loss = ['mse', 'binary_crossentropy'] if self.discriminative else total_loss
+        loss = ["mse", "binary_crossentropy"] if self.discriminative else total_loss
         metrics = None if self.discriminative else [reconstruction_loss, kl_divergence_loss]
 
         # Compile discriminator if present.
         if self.discriminative:
-            self.discriminator.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate), metrics=['accuracy'])
+            self.discriminator.compile(loss="binary_crossentropy", optimizer=Adam(learning_rate), metrics=["accuracy"])
 
         # Compile the main model.
         self.model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)

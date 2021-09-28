@@ -59,11 +59,11 @@ if not vae.discriminative:
 else:
     valid_labels = np.ones((constants.BATCH_SIZE, 1))
     fake_labels = np.zeros((constants.BATCH_SIZE, 1))
-    callback_invoker = TrainingReferenceReconstructor(constants.RUN_FOLDER_NAME, 0, 0, vae)
+
+    callback_invoker = TrainingReferenceReconstructor(constants.RUN_FOLDER_NAME, (constants.EXEC_ON_NTH_BATCH, constants.EXEC_ON_NTH_EPOCH), constants.INITIAL_EPOCH, vae, constants.PLOT_TRAINING_LOSS)
 
     for epoch in range(constants.EPOCHS):
         images = data_flow.next()
-        callback_invoker.epoch = epoch
         batch_count = 1
 
         while np.shape(images)[1] is constants.BATCH_SIZE:
@@ -71,23 +71,25 @@ else:
 
             latent_fake = vae.encoder.predict(image)
             latent_real = np.random.normal(size=(constants.BATCH_SIZE, constants.Z_DIM))
-
             # Train discriminator on the batch.
             disc_loss_real = vae.discriminator.train_on_batch(latent_real, valid_labels)
             disc_loss_fake = vae.discriminator.train_on_batch(latent_fake, fake_labels)
+
             disc_loss = 0.5 * np.add(disc_loss_real, disc_loss_fake)
 
             # Train combined model on the batch.
             aae_loss = vae.model.train_on_batch(image, [image, valid_labels])
 
             # Plot the progress.
-            print("Epoch %d: [Discriminator loss: %f, accuracy: %.2f%%] [Generator loss: %f, mse: %f]" % (epoch, disc_loss[0], 100 * disc_loss[1], aae_loss[0], aae_loss[1]))
+            print("Epoch %d: [Discriminator loss: %f, Accuracy: %.2f%%] [MSE: %f, Gaussian Loss: %f]" % (epoch, disc_loss[0], 100 * disc_loss[1], aae_loss[0], aae_loss[1]))
 
             images = data_flow.next()
+
+            callback_invoker.on_batch_end(batch_count)
             batch_count += 1
 
-        callback_invoker.execute_on_nth_batch = batch_count
-        callback_invoker.on_batch_end(batch_count)
+        callback_invoker.on_epoch_end(epoch, {"disc_loss": disc_loss[0], "reconstruction_loss": aae_loss[0], "gaussian_loss": aae_loss[1]})
+        callback_invoker.epoch += 1
 
 # Save the model.
 vae.model.save(os.path.join(constants.RUN_FOLDER_NAME, "model"))
