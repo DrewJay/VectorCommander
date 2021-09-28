@@ -106,10 +106,9 @@ class VariationalAutoencoder:
             padding="same",
             name="encoder_conv_" + str(index),
         )(x)
-        y = LeakyReLU()(y)
         y = BatchNormalization()(y)
+        y = LeakyReLU()(y)
 
-        # Extract information.
         y = Conv2D(
             filters=self.encoder_conv_filters[index],
             kernel_size=self.encoder_conv_kernel_size[index],
@@ -127,9 +126,9 @@ class VariationalAutoencoder:
                 padding="same"
             )(x)
 
+        out = BatchNormalization()(out)
         out = Add()([x, y])
         out = LeakyReLU()(out)
-        out = BatchNormalization()(out)
 
         if self.use_dropout:
             out = Dropout(rate=0.25)(out)
