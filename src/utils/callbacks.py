@@ -29,7 +29,7 @@ class TrainingReferenceReconstructor(Callback):
         self.kl_loss = []
 
         self.disc_loss = []
-        self.gaussian_loss = []
+        self.validity_loss = []
 
         self.r_loss = []
         self.epochs = []
@@ -38,7 +38,7 @@ class TrainingReferenceReconstructor(Callback):
         if self.vae.discriminative:
             fig, axs = plt.subplot_mosaic([["Discriminative", "Reconstruction"], ["Discriminative", "Gaussian"]], constrained_layout=True)
             self.disc_loss_plot = axs["Discriminative"]
-            self.gaussian_loss_plot = axs["Gaussian"]
+            self.validity_loss_plot = axs["Gaussian"]
         else:
             fig, axs = plt.subplot_mosaic([["Total", "Reconstruction"], ["Total", "KL"]], constrained_layout=True)
             self.loss_plot = axs["Total"]
@@ -99,15 +99,15 @@ class TrainingReferenceReconstructor(Callback):
 
             # AAE graphs.
             if self.vae.discriminative:
-                self.gaussian_loss.append(logs["gaussian_loss"])
+                self.validity_loss.append(logs["validity_loss"])
                 self.disc_loss.append(logs["disc_loss"])
 
-                self.gaussian_loss_plot.cla()
+                self.validity_loss_plot.cla()
                 self.disc_loss_plot.cla()
 
-                self.gaussian_loss_plot.plot(self.epochs, self.gaussian_loss, label="Gaussian loss")
-                self.gaussian_loss_plot.text(0.5, 0.5, str(round(logs["gaussian_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.gaussian_loss_plot.transAxes)
-                self.gaussian_loss_plot.legend()
+                self.validity_loss_plot.plot(self.epochs, self.validity_loss, label="Validity loss")
+                self.validity_loss_plot.text(0.5, 0.5, str(round(logs["validity_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.validity_loss_plot.transAxes)
+                self.validity_loss_plot.legend()
 
                 self.disc_loss_plot.plot(self.epochs, self.disc_loss, label="Discriminative loss")
                 self.disc_loss_plot.text(0.5, 0.5, str(round(logs["disc_loss"], 3)), horizontalalignment="center", verticalalignment="center", transform=self.disc_loss_plot.transAxes)

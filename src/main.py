@@ -36,6 +36,7 @@ vae = VariationalAutoencoder(
     decoder_conv_t_kernel_size=[3, 3, 3, 3],
     decoder_conv_t_strides=[2, 2, 2, 2],
     z_dim=constants.Z_DIM,
+    dense_units=[500, 250, 125, 64, 32],
     use_batch_norm=True,
     use_dropout=True,
     discriminative=constants.DISCRIMINATIVE
@@ -57,10 +58,16 @@ if not vae.discriminative:
 
 # AAE training.
 else:
-    valid_labels = np.ones((constants.BATCH_SIZE, 1))
-    fake_labels = np.zeros((constants.BATCH_SIZE, 1))
+    valid_labels = np.ones((constants.BATCH_SIZE, 1), dtype=int)
+    fake_labels = np.zeros((constants.BATCH_SIZE, 1), dtype=int)
 
-    callback_invoker = TrainingReferenceReconstructor(constants.RUN_FOLDER_NAME, (constants.EXEC_ON_NTH_BATCH, constants.EXEC_ON_NTH_EPOCH), constants.INITIAL_EPOCH, vae, constants.PLOT_TRAINING_LOSS)
+    callback_invoker = TrainingReferenceReconstructor(
+        run_folder=constants.RUN_FOLDER_NAME,
+        execute_on=(constants.EXEC_ON_NTH_BATCH, constants.EXEC_ON_NTH_EPOCH),
+        initial_epoch=constants.INITIAL_EPOCH,
+        vae=vae,
+        plot_training_loss=constants.PLOT_TRAINING_LOSS
+    )
 
     for epoch in range(constants.EPOCHS):
         images = data_flow.next()
@@ -72,23 +79,20 @@ else:
             latent_fake = vae.encoder.predict(image)
             latent_real = np.random.normal(size=(constants.BATCH_SIZE, constants.Z_DIM))
             # Train discriminator on the batch.
-            disc_loss_real = vae.discriminator.train_on_batch(latent_real, valid_labels)
-            disc_loss_fake = vae.discriminator.train_on_batch(latent_fake, fake_labels)
-
-            disc_loss = 0.5 * np.add(disc_loss_real, disc_loss_fake)
+            disc_loss = vae.discriminator.train_on_batch(x=np.concatenate((latent_real, latent_fake)), y=np.concatenate((valid_labels, fake_labels)))
 
             # Train combined model on the batch.
             aae_loss = vae.model.train_on_batch(image, [image, valid_labels])
 
             # Plot the progress.
-            print("Epoch %d: [Discriminator loss: %f, Accuracy: %.2f%%] [MSE: %f, Gaussian Loss: %f]" % (epoch, disc_loss[0], 100 * disc_loss[1], aae_loss[0], aae_loss[1]))
+            print("Epoch %d: [Discriminator loss: %f, Accuracy: %.2f%%] [MSE: %f, Validity Loss: %f]" % (epoch, disc_loss[0], 100 * disc_loss[1], aae_loss[0], aae_loss[1]))
 
             images = data_flow.next()
 
             callback_invoker.on_batch_end(batch_count)
             batch_count += 1
 
-        callback_invoker.on_epoch_end(epoch, {"disc_loss": disc_loss[0], "reconstruction_loss": aae_loss[0], "gaussian_loss": aae_loss[1]})
+        callback_invoker.on_epoch_end(epoch, {"disc_loss": disc_loss[0], "reconstruction_loss": aae_loss[0], "validity_loss": aae_loss[1]})
         callback_invoker.epoch += 1
 
 # Save the model.

@@ -55,9 +55,10 @@ class VariationalAutoencoder:
             decoder_conv_t_kernel_size,
             decoder_conv_t_strides,
             z_dim,
+            dense_units,
             use_batch_norm=False,
             use_dropout=False,
-            discriminative=False
+            discriminative=False,
     ):
         """
         Class constructor.
@@ -69,6 +70,7 @@ class VariationalAutoencoder:
         :param decoder_conv_t_kernel_size: Decoder convolution kernel size.
         :param decoder_conv_t_strides: Decoder convolution strides.
         :param z_dim: Latent vector shape.
+        :param dense_units: Array of units of dense layers to use in discriminator.
         :param use_batch_norm: Use batch normalization flag.
         :param use_dropout: Use dropout layers flag.
         :param discriminative: Use discriminator instead of KL divergence.
@@ -88,6 +90,7 @@ class VariationalAutoencoder:
         self.n_layers_encoder = len(encoder_conv_filters)
         self.n_layers_decoder = len(decoder_conv_t_filters)
         self.discriminative = discriminative
+        self.dense_units = dense_units
 
         self._build()
 
@@ -144,11 +147,11 @@ class VariationalAutoencoder:
             discriminator_input = Input(shape=self.z_dim)
             x = discriminator_input
 
-            x = Dense(512, input_dim=self.z_dim)(x)
-            x = LeakyReLU(alpha=0.2)(x)
-            x = Dense(256)(x)
-            x = LeakyReLU(alpha=0.2)(x)
-            x = Dense(1, activation="relu")(x)
+            for units in self.dense_units:
+                x = Dense(units)(x)
+                x = LeakyReLU(alpha=0.2)(x)
+
+            x = Dense(1, activation="sigmoid")(x)
 
             self.discriminator = Model(discriminator_input, x)
             self.discriminator._name = "discriminator"
@@ -220,7 +223,6 @@ class VariationalAutoencoder:
         if self.discriminative:
             validity = self.discriminator(encoder_output)
             # Not trainable during combined model training.
-            self.discriminator.trainable = False
             self.model = Model(model_input, [model_output, validity])
         else:
             self.model = Model(model_input, model_output)
@@ -257,6 +259,7 @@ class VariationalAutoencoder:
         # Compile discriminator if present.
         if self.discriminative:
             self.discriminator.compile(loss="binary_crossentropy", optimizer=Adam(learning_rate), metrics=["accuracy"])
+            self.discriminator.trainable = False
 
         # Compile the main model.
         self.model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
@@ -272,7 +275,13 @@ class VariationalAutoencoder:
         :param initial_epoch: Initial epoch.
         :param lr_decay: Learning rate decay.
         """
-        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self, constants.PLOT_TRAINING_LOSS)
+        custom_callback = TrainingReferenceReconstructor(
+            run_folder=run_folder,
+            execute_on=execute_on,
+            initial_epoch=initial_epoch,
+            vae=self,
+            plot_training_loss=constants.PLOT_TRAINING_LOSS
+        )
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         callbacks_list = [custom_callback, lr_schedule]
@@ -298,7 +307,13 @@ class VariationalAutoencoder:
         :param initial_epoch: Initial epoch.
         :param lr_decay: Learning rate decay.
         """
-        custom_callback = TrainingReferenceReconstructor(run_folder, execute_on, initial_epoch, self, constants.PLOT_TRAINING_LOSS)
+        custom_callback = TrainingReferenceReconstructor(
+            run_folder=run_folder,
+            execute_on=execute_on,
+            initial_epoch=initial_epoch,
+            vae=self,
+            plot_training_loss=constants.PLOT_TRAINING_LOSS
+        )
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
         callbacks_list = [custom_callback, lr_schedule]
