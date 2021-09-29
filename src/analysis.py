@@ -72,6 +72,7 @@ def get_vector_by_label(column, label, neutral_label, batch_size):
     :return: A tuple containing unit vector itself and original label value.
     """
     if path.isfile(constants.VECTOR_FOLDER + label + ".npy"):
+        print("Vector exists!")
         return column, label, np.load(constants.VECTOR_FOLDER + label + ".npy")
 
     # batch_size = 500.

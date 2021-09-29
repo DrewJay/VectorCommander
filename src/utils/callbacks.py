@@ -59,7 +59,7 @@ class TrainingReferenceReconstructor(Callback):
         """
         exec_on_batch, exec_on_epoch = self.execute_on
 
-        if batch_index % exec_on_batch == 0 and (exec_on_epoch is not None and self.epoch % exec_on_epoch == 0):
+        if batch_index % exec_on_batch == 0 and ((exec_on_epoch is None) or exec_on_epoch is not None and self.epoch % exec_on_epoch == 0):
             z_new = np.random.normal(size=(1, self.vae.z_dim))
             # Remove batch dim because it has only 1 item inside.
             reconstructed = self.vae.decoder.predict(np.array(z_new))[0].squeeze()
