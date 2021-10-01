@@ -39,7 +39,9 @@ vae = VariationalAutoencoder(
     dense_units=[500, 250, 125, 64, 32],
     use_batch_norm=True,
     use_dropout=True,
-    discriminative=constants.DISCRIMINATIVE
+    discriminative=constants.DISCRIMINATIVE,
+    gamma=constants.GAMMA,
+    capacity=constants.CAPACITY,
 )
 
 # Compile the model.

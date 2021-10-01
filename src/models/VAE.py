@@ -4,12 +4,10 @@ from keras.models import Model
 from keras import backend as K
 from settings import constants
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
 from keras.utils import plot_model
 from utils.callbacks import TrainingReferenceReconstructor, step_decay_schedule
 import numpy as np
 import os
-import pickle
 import tensorflow as tf
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -36,8 +34,9 @@ class Sampling(Layer):
         :param args: Layer inputs.
         :return: Generated random distribution.
         """
-        mu, log_var = args
-        epsilon = K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
+        mu, log_var, delta = args
+        epsilon = delta * K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
+        # Square root of variance.
         return mu + K.exp(log_var / 2) * epsilon
 
 
@@ -56,6 +55,8 @@ class VariationalAutoencoder:
             decoder_conv_t_strides,
             z_dim,
             dense_units,
+            gamma=1,
+            capacity=0,
             use_batch_norm=False,
             use_dropout=False,
             discriminative=False,
@@ -91,6 +92,8 @@ class VariationalAutoencoder:
         self.n_layers_decoder = len(decoder_conv_t_filters)
         self.discriminative = discriminative
         self.dense_units = dense_units
+        self.gamma = gamma
+        self.capacity = capacity
 
         self._build()
 
@@ -170,10 +173,11 @@ class VariationalAutoencoder:
         x = Flatten()(x)
         self.mu = Dense(self.z_dim, name="mu")(x)
         self.log_var = Dense(self.z_dim, name="log_var")(x)
+        self.delta = Dense(1, name="delta")(x)
 
-        self.encoder_mu_log_var = Model(encoder_input, (self.mu, self.log_var))
+        self.encoder_mu_log_var = Model(encoder_input, (self.mu, self.log_var, self.delta))
 
-        sampling = Sampling()([self.mu, self.log_var])
+        sampling = Sampling()([self.mu, self.log_var, self.delta])
 
         self.encoder = Model(encoder_input, sampling)
         self.encoder._name = "encoder"
@@ -250,7 +254,7 @@ class VariationalAutoencoder:
         # Combined loss.
         def total_loss(y_true, y_pred):
             r_loss = reconstruction_loss(y_true, y_pred)
-            kl_loss = kl_divergence_loss(y_true, y_pred)
+            kl_loss = self.gamma * K.abs(kl_divergence_loss(y_true, y_pred) - self.capacity)
             return r_loss + kl_loss
 
         loss = ["mse", "binary_crossentropy"] if self.discriminative else total_loss
