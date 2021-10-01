@@ -35,6 +35,9 @@ class Sampling(Layer):
         :return: Generated random distribution.
         """
         mu, log_var, delta = args
+        # We cannot directly sample from distribution using given mean and variance, because backpropagation would be stochastic
+        # with increased variance and thus less accurate. Solution to this issue is sampling for known distribution, multiplying it by
+        # standard deviation and adding mean tensors to it.
         epsilon = delta * K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
         # Square root of variance.
         return mu + K.exp(log_var / 2) * epsilon
