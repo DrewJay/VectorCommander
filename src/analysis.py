@@ -6,7 +6,6 @@ import settings.constants as constants
 import pandas as pd
 import argparse
 from os import path
-from models.VAE import VariationalAutoencoder
 from utils.loaders import ImageLabelLoader
 import keras
 
@@ -19,7 +18,7 @@ vae = keras.models.load_model(os.path.join(constants.RUN_FOLDER_NAME, "model"), 
 encoder = vae.get_layer("encoder")
 decoder = vae.get_layer("decoder")
 
-data_flow_unlabeled = imageLoader.build(att, 10)
+data_flow_unlabeled = imageLoader.build(csv_data=att, batch_size=10)
 
 
 def show_distributions():
@@ -45,16 +44,18 @@ def show_distributions():
     plt.show()
 
 
-def show_random_samples():
+def show_random_samples(amount=30):
     """
     Attempt to generate images by generating and reconstructing standard normal distributions.
+    :param: amount: Amount of samples.
     """
-    random_image_samples = 30
+    random_image_samples = amount
     z_generated = np.random.normal(size=(random_image_samples, constants.Z_DIM))
     reconstructed = decoder.predict(np.array(z_generated))
 
-    # Display randomly generated faces.
-    fig = plt.figure(figsize=(18, 5))
+    # Display randomly generated samples.
+    fig = plt.figure(figsize=(18, 5), num="Random samples")
+    fig.suptitle("Random samples")
     fig.subplots_adjust(hspace=0.4, wspace=0.4)
     for i in range(random_image_samples):
         ax = fig.add_subplot(3, 10, i + 1)
@@ -237,6 +238,29 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
     plt.show()
 
 
+def reconstruct_samples(amount):
+    """
+    Reconstruct image using encoder-decoder forward pass.
+    :param amount: Amount of images.
+    """
+    fig = plt.figure(figsize=(4, 5), num="Sample reconstruction")
+    fig.suptitle("Original vs reconstructed image", fontsize=16)
+    original_images = data_flow_unlabeled.next()[0][:amount]
+
+    for i in range(amount):
+        encoded_images = encoder.predict(original_images)
+        decoded_images = decoder.predict(encoded_images)
+
+        sub = fig.add_subplot(amount, 2, (i * 2) + 1)
+        sub.imshow(original_images[i])
+        sub.axis("off")
+
+        sub2 = fig.add_subplot(amount, 2, (i * 2) + 2)
+        sub2.imshow(decoded_images[i])
+        sub2.axis("off")
+    plt.show()
+
+
 def morph(start_image_file, end_image_file):
     """
     Vectorize start and end image and plot continuous transformation of one to another.
@@ -253,16 +277,17 @@ def morph(start_image_file, end_image_file):
     # Just two images.
     data_flow_specific = imageLoader.build(att_specific, 2)
 
-    example_batch = next(data_flow_specific)
+    example_batch = data_flow_specific.next()
     example_images = example_batch[0]
 
     z_points = encoder.predict(example_images)
-    figure = plt.figure(figsize=(18, 8))
+    fig = plt.figure(figsize=(18, 8), num="Sample morphing")
+    fig.suptitle("Sample morphing", fontsize=16)
 
     counter = 1
 
     img = example_images[0].squeeze()
-    sub = figure.add_subplot(1, len(factors) + 2, counter)
+    sub = fig.add_subplot(1, len(factors) + 2, counter)
     sub.axis("off")
     sub.imshow(img)
 
@@ -276,13 +301,13 @@ def morph(start_image_file, end_image_file):
         changed_image = decoder.predict(np.array([changed_z_point]))[0]
 
         img = changed_image.squeeze()
-        sub = figure.add_subplot(1, len(factors) + 2, counter)
+        sub = fig.add_subplot(1, len(factors) + 2, counter)
         sub.imshow(img)
 
         counter += 1
 
     img = example_images[1].squeeze()
-    sub = figure.add_subplot(1, len(factors) + 2, counter)
+    sub = fig.add_subplot(1, len(factors) + 2, counter)
     sub.imshow(img)
 
     plt.show()
@@ -291,6 +316,8 @@ def morph(start_image_file, end_image_file):
 parser = argparse.ArgumentParser()
 parser.add_argument("--vector_transition", help="Visualize continuous vector transition.", action="store_true")
 parser.add_argument("--vector_lookup", help="Find and save vectors as numpy arrays.", action="store_true")
+parser.add_argument("--vector_reconstruction", help="Reconstruct vectors into original images.", action="store_true")
+parser.add_argument("--random_samples", help="Show samples drawn randomly from latent space.", action="store_true")
 parser.add_argument("--column", help="CSV column name to seek label in.")
 parser.add_argument("--label", help="Value of the column.")
 parser.add_argument("--neutral_label", help="Label that doesn't include target state.", type=str, default="No Finding")
@@ -310,5 +337,11 @@ elif args.vector_lookup and args.column and args.label:
     print("Vector lookup mode launched.")
     print("Looking for " + args.label + " label.")
     get_vector_by_label(args.column, args.label, args.neutral_label, 80)
+elif args.vector_reconstruction and args.samples:
+    print("Vector reconstruction mode launched.")
+    reconstruct_samples(args.samples)
+elif args.random_samples and args.samples:
+    print("Random sampling mode launched.")
+    show_random_samples(args.samples)
 else:
     print("Illegal argument combination provided.")
