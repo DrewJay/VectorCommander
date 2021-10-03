@@ -43,7 +43,7 @@ vae = VariationalAutoencoder(
     discriminative=constants.DISCRIMINATIVE,
     gamma=constants.GAMMA,
     capacity=constants.CAPACITY,
-    use_delta=True
+    use_delta=constants.USE_DELTA
 )
 
 # Compile the model.
