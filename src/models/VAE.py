@@ -34,16 +34,9 @@ class Sampling(Layer):
         :param args: Layer inputs.
         :return: Generated random distribution.
         """
-<<<<<<< HEAD
         mu, log_var, *rest = args
         delta = rest[0] if len(rest) >= 1 else 1
 
-=======
-        mu, log_var, delta = args
-        # We cannot directly sample from distribution using given mean and variance, because backpropagation would be stochastic
-        # with increased variance and thus less accurate. Solution to this issue is sampling for known distribution, multiplying it by
-        # standard deviation and adding mean tensors to it.
->>>>>>> db19b01b26d0f9fa8f5ab4af4ee6c74db0683995
         epsilon = delta * K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
         # Square root of variance.
         return mu + K.exp(log_var / 2) * epsilon
