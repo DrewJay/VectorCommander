@@ -3,8 +3,8 @@ const fs = require('fs');
 const rimraf = require('rimraf');
 const { exec } = require('child_process');
 
-const modelPath = '../Progrezz/model';
-const analysisPath = '../Progrezz/analysis';
+const modelPath = '../Progrezz/neural/model';
+const analysisPath = '../Progrezz/neural/analysis';
 
 // Remove folders so they can be reliably recreated.
 if (fs.existsSync(modelPath)) { rimraf.sync(modelPath); }
@@ -20,7 +20,7 @@ fse.copy('run/analysis', analysisPath, (err) => {
         fse.copy('run/vae/1_output/model', modelPath, (_err) => {
             if (!_err) {
                 console.log('File copying successful.');
-                exec('cd ../Progrezz & git add . & git commit -m "Automatic commit." & git push origin master', (error, stdout, stderr) => {
+                exec('cd ../Progrezz & aws s3 mv neural s3://arn:aws:s3:us-east-2:277059337208:accesspoint/get-data --recursive', (error, stdout, stderr) => {
                     console.log(error, stdout, stderr);
                 });
             }

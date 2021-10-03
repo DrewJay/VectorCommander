@@ -25,7 +25,8 @@ data_flow = data_gen.flow_from_directory(
     subset="training",
 )
 
-print("Discriminative mode: " + str(constants.DISCRIMINATIVE))
+print("Discriminative mode: " + str(constants.DISCRIMINATIVE) + ".")
+print("Delta mode: " + str(constants.USE_DELTA) + ".")
 
 vae = VariationalAutoencoder(
     input_dim=constants.INPUT_DIM,
@@ -42,6 +43,7 @@ vae = VariationalAutoencoder(
     discriminative=constants.DISCRIMINATIVE,
     gamma=constants.GAMMA,
     capacity=constants.CAPACITY,
+    use_delta=True
 )
 
 # Compile the model.

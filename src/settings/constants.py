@@ -9,12 +9,14 @@ IMAGE_FOLDER = "data/train/images/"
 VECTOR_FOLDER = "run/analysis/label_vectors/"
 NETWORK_VISUALIZATION_FOLDER_NAME = "architecture"
 SAMPLE_RESULTS_FOLDER_NAME = "generatedSamples"
-CSV_NAME = "Data_Entry_2017_v2020.csv"
-DATA_EXTENSION = "png"
+
+CSV_NAME = "list_attr_celeba.csv"
+CSV_X_COL = "image_id"
+DATA_EXTENSION = "jpg"
 
 # Model metadata.
 LEARNING_RATE = 0.001
-Z_DIM = 200
+Z_DIM = 500
 GAMMA = 1
 CAPACITY = 0
 RECONSTRUCTION_LOSS_FACTOR = 10000
@@ -22,9 +24,9 @@ RECONSTRUCTION_LOSS_FACTOR = 10000
 # Training metadata.
 INPUT_DIM = (128, 128, 3)
 BATCH_SIZE = 32
-EPOCHS = 600
+EPOCHS = 150
 EXEC_ON_NTH_BATCH = 9
-EXEC_ON_NTH_EPOCH = 10
+EXEC_ON_NTH_EPOCH = 2
 INITIAL_EPOCH = 0
 
 # Analysis metadata.
@@ -32,4 +34,5 @@ ANALYSIS_BATCH_SIZE = 300
 
 # Various config.
 DISCRIMINATIVE = False
+USE_DELTA = True
 PLOT_TRAINING_LOSS = True

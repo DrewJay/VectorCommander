@@ -12,7 +12,7 @@ import keras
 att = pd.read_csv(os.path.join(constants.DATA_FOLDER_NAME, constants.CSV_NAME))
 
 # Exclude channels dim.
-imageLoader = ImageLabelLoader(constants.IMAGE_FOLDER, constants.INPUT_DIM[:2])
+imageLoader = ImageLabelLoader(constants.IMAGE_FOLDER, constants.INPUT_DIM[:2], x_col=constants.CSV_X_COL)
 vae = keras.models.load_model(os.path.join(constants.RUN_FOLDER_NAME, "model"), compile=False)
 
 encoder = vae.get_layer("encoder")
@@ -36,8 +36,7 @@ def show_distributions():
         # 5 x 10 grid.
         vector_display = fig.add_subplot(5, 10, i + 1)
         vector_display.hist(z_test[i], density=True, bins=20)
-        vector_display.text(0.5, -0.35, "Vector " + str(i), c="red", fontsize=10, ha="center",
-                            transform=vector_display.transAxes)
+        vector_display.text(0.5, -0.35, "Vector " + str(i), c="red", fontsize=10, ha="center", transform=vector_display.transAxes)
         # pdf returns ys that represent bell curve itself in order, random_normal returns ys that follow
         # particular distribution without order.
         vector_display.plot(x, norm.pdf(x))
@@ -72,9 +71,10 @@ def get_vector_by_label(column, label, neutral_label, batch_size):
     :param batch_size: Batch size of dataset used to lookup the images with given label.
     :return: A tuple containing unit vector itself and original label value.
     """
-    if path.isfile(constants.VECTOR_FOLDER + label + ".npy"):
+    z_file = constants.VECTOR_FOLDER + column + "_" + label
+    if path.isfile(z_file + ".npy"):
         print("Vector exists!")
-        return column, label, np.load(constants.VECTOR_FOLDER + label + ".npy")
+        return column, label, np.load(z_file + ".npy")
 
     # batch_size = 500.
     data_flow_labeled = imageLoader.build(att, batch_size, label=column)
@@ -103,8 +103,8 @@ def get_vector_by_label(column, label, neutral_label, batch_size):
 
         # Latent vectors of images having given attribute. Example:
         # [z_1, z_2, z_3] chosen using [0, 1, 0] -> z_2 is found.
-        latent_vectors_with_attribute = z[attribute == label]
-        latent_vectors_without_attribute = z[attribute == neutral_label]
+        latent_vectors_with_attribute = z[attribute == (int(label) if label.isnumeric() else label)]
+        latent_vectors_without_attribute = z[attribute == (int(neutral_label) if label.isnumeric() else neutral_label)]
 
         if len(latent_vectors_with_attribute) > 0:
             current_sum_positive = current_sum_positive + np.sum(latent_vectors_with_attribute, axis=0)
@@ -143,7 +143,7 @@ def get_vector_by_label(column, label, neutral_label, batch_size):
             print("Found the " + label + " vector.")
             break
 
-    np.save(constants.VECTOR_FOLDER + label, current_vector)
+    np.save(z_file, current_vector)
     return column, label, current_vector
 
 
@@ -159,7 +159,7 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
     factors = np.linspace(0, factor_target, factor_steps)
     column, label, vector = label_vector
 
-    att_specific = att[np.logical_not(att[column].isin([label]))]
+    att_specific = att[np.logical_not(att[column].isin([int(label) if label.isnumeric() else label]))]
     att_specific = att_specific.reset_index()
     data_flow_specific = imageLoader.build(att_specific, samples_amount)
 
@@ -171,14 +171,8 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
     fig = plt.figure(figsize=(15, 5), num="Vector addition")
     fig2 = plt.figure(figsize=(15, 5), num="Transformation visualization")
 
-    title1 = fig.add_subplot()
-    title1.text(0, 1, label + " vector addition", c="black", fontsize=15, transform=title1.transAxes)
-
-    title2 = fig2.add_subplot()
-    title2.text(0, 1, label + " transformation visualization", c="black", fontsize=15, transform=title2.transAxes)
-
-    title1.axis("off")
-    title2.axis("off")
+    fig.suptitle(column + "=" + label + " vector addition", fontsize=16)
+    fig2.suptitle(column + "=" + label + " transformation visualization", fontsize=16)
 
     counter = 1
     index_increment = 0
@@ -207,8 +201,15 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
             if img_prev is not None:
                 index = counter - ((i + 1) * 2) + index_increment
                 sub2 = fig2.add_subplot(steps, len(factors), index)
-                sub2.text(0.5, -0.15, "Factor " + str(round(factors[j - 1], 1)) + " -> " + str(round(factors[j], 1)),
-                          c="red", fontsize=10, ha="center", transform=sub2.transAxes)
+                sub2.text(
+                    0.5,
+                    -0.15,
+                    "Factor " + str(round(factors[j - 1], 1)) + " -> " + str(round(factors[j], 1)),
+                    c="red",
+                    fontsize=10,
+                    ha="center",
+                    transform=sub2.transAxes
+                )
                 sub2.axis("off")
                 diff = keras.backend.mean(keras.backend.square(img - img_prev), axis=2)
                 sub2.imshow(diff)
@@ -217,16 +218,14 @@ def add_vector_to_images(label_vector, samples_amount, factor_target=5, factor_s
                 if j == len(factors) - 1:
                     index_increment += 1
                     sub3 = fig2.add_subplot(steps, len(factors), index + 1)
-                    sub3.text(0.5, -0.15, "Absolute diff", c="purple", fontsize=10, ha="center",
-                              transform=sub3.transAxes)
+                    sub3.text(0.5, -0.15, "Absolute diff", c="purple", fontsize=10, ha="center", transform=sub3.transAxes)
                     sub3.axis("off")
 
                     diff_absolute = keras.backend.mean(keras.backend.square(img - img_zero_factor), axis=2)
                     sub3.imshow(diff_absolute)
 
             sub = fig.add_subplot(steps, len(factors) + 1, counter)
-            sub.text(0.5, -0.15, "Factor " + str(round(factor, 1)), c="red", fontsize=10, ha="center",
-                     transform=sub.transAxes)
+            sub.text(0.5, -0.15, "Factor " + str(round(factor, 1)), c="red", fontsize=10, ha="center", transform=sub.transAxes)
             sub.axis("off")
             sub.imshow(img)
 
@@ -320,7 +319,7 @@ parser.add_argument("--vector_reconstruction", help="Reconstruct vectors into or
 parser.add_argument("--random_samples", help="Show samples drawn randomly from latent space.", action="store_true")
 parser.add_argument("--column", help="CSV column name to seek label in.")
 parser.add_argument("--label", help="Value of the column.")
-parser.add_argument("--neutral_label", help="Label that doesn't include target state.", type=str, default="No Finding")
+parser.add_argument("--neutral_label", help="Label that doesn't include target state.", type=str, default=-1)
 parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
 parser.add_argument("--f_steps", help="Total amount of factorization steps between 0 and {factor_target}.", type=int,
                     default=6)
@@ -335,7 +334,7 @@ if args.vector_transition and args.column and args.label:
     add_vector_to_images(found_vec, args.samples, args.f_target, args.f_steps)
 elif args.vector_lookup and args.column and args.label:
     print("Vector lookup mode launched.")
-    print("Looking for " + args.label + " label.")
+    print("Seeking " + args.column + "=" + str(args.label))
     get_vector_by_label(args.column, args.label, args.neutral_label, 80)
 elif args.vector_reconstruction and args.samples:
     print("Vector reconstruction mode launched.")

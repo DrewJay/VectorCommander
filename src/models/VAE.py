@@ -34,7 +34,9 @@ class Sampling(Layer):
         :param args: Layer inputs.
         :return: Generated random distribution.
         """
-        mu, log_var, delta = args
+        mu, log_var, *rest = args
+        delta = rest[0] if len(rest) >= 1 else 1
+
         epsilon = delta * K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
         # Square root of variance.
         return mu + K.exp(log_var / 2) * epsilon
@@ -57,6 +59,7 @@ class VariationalAutoencoder:
             dense_units,
             gamma=1,
             capacity=0,
+            use_delta=False,
             use_batch_norm=False,
             use_dropout=False,
             discriminative=False,
@@ -76,7 +79,7 @@ class VariationalAutoencoder:
         :param use_dropout: Use dropout layers flag.
         :param discriminative: Use discriminator instead of KL divergence.
         """
-        self.name = "variational_autoencoder"
+        self.name = "vector_commander"
 
         self.input_dim = input_dim
         self.encoder_conv_filters = encoder_conv_filters
@@ -94,6 +97,7 @@ class VariationalAutoencoder:
         self.dense_units = dense_units
         self.gamma = gamma
         self.capacity = capacity
+        self.use_delta = use_delta
 
         self._build()
 
@@ -173,11 +177,14 @@ class VariationalAutoencoder:
         x = Flatten()(x)
         self.mu = Dense(self.z_dim, name="mu")(x)
         self.log_var = Dense(self.z_dim, name="log_var")(x)
-        self.delta = Dense(1, name="delta")(x)
 
-        self.encoder_mu_log_var = Model(encoder_input, (self.mu, self.log_var, self.delta))
+        if self.use_delta:
+            self.delta = Dense(1, name="delta")(x)
 
-        sampling = Sampling()([self.mu, self.log_var, self.delta])
+        encoder_outputs = (self.mu, self.log_var) if not self.use_delta else (self.mu, self.log_var, self.delta)
+        self.encoder_mu_log_var = Model(encoder_input, encoder_outputs)
+
+        sampling = Sampling()(encoder_outputs)
 
         self.encoder = Model(encoder_input, sampling)
         self.encoder._name = "encoder"
