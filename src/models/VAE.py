@@ -38,7 +38,7 @@ class Sampling(Layer):
         delta = rest[0] if len(rest) >= 1 else 1
 
         epsilon = delta * K.random_normal(shape=K.shape(mu), mean=0., stddev=1.)
-        # Square root of variance.
+        # Square root of variance. Because aX + b where X is standard normal random vector, a increases variance a² times.
         return mu + K.exp(log_var / 2) * epsilon
 
 
