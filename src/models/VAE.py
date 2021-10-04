@@ -6,6 +6,7 @@ from settings import constants
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from utils.callbacks import TrainingReferenceReconstructor, step_decay_schedule
+import shared.variables as sh_vars
 import numpy as np
 import os
 import tensorflow as tf
@@ -58,7 +59,7 @@ class VariationalAutoencoder:
             z_dim,
             dense_units,
             gamma=1,
-            capacity=0,
+            target_capacity=0,
             use_delta=False,
             use_batch_norm=False,
             use_dropout=False,
@@ -96,7 +97,7 @@ class VariationalAutoencoder:
         self.discriminative = discriminative
         self.dense_units = dense_units
         self.gamma = gamma
-        self.capacity = capacity
+        self.target_capacity = target_capacity
         self.use_delta = use_delta
 
         self._build()
@@ -261,7 +262,7 @@ class VariationalAutoencoder:
         # Combined loss.
         def total_loss(y_true, y_pred):
             r_loss = reconstruction_loss(y_true, y_pred)
-            kl_loss = self.gamma * K.abs(kl_divergence_loss(y_true, y_pred) - self.capacity)
+            kl_loss = self.gamma * K.abs(kl_divergence_loss(y_true, y_pred) - sh_vars.CAPACITY)
             return r_loss + kl_loss
 
         loss = ["mse", "binary_crossentropy"] if self.discriminative else total_loss
@@ -291,7 +292,8 @@ class VariationalAutoencoder:
             execute_on=execute_on,
             initial_epoch=initial_epoch,
             vae=self,
-            plot_training_loss=constants.PLOT_TRAINING_LOSS
+            plot_training_loss=constants.PLOT_TRAINING_LOSS,
+            target_capacity=self.target_capacity
         )
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 
@@ -323,7 +325,8 @@ class VariationalAutoencoder:
             execute_on=execute_on,
             initial_epoch=initial_epoch,
             vae=self,
-            plot_training_loss=constants.PLOT_TRAINING_LOSS
+            plot_training_loss=constants.PLOT_TRAINING_LOSS,
+            target_capacity=self.target_capacity
         )
         lr_schedule = step_decay_schedule(initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
 

@@ -1,6 +1,7 @@
 from keras.callbacks import Callback, LearningRateScheduler
 import numpy as np
 import settings.constants as constants
+import shared.variables as sh_vars
 import matplotlib.pyplot as plt
 import os
 
@@ -9,19 +10,29 @@ class TrainingReferenceReconstructor(Callback):
     """
     Custom callback generating random samples using decoder during training.
     """
-    def __init__(self, run_folder, execute_on, initial_epoch, vae, plot_training_loss=False):
+    def __init__(
+            self,
+            run_folder,
+            execute_on,
+            initial_epoch,
+            vae,
+            target_capacity,
+            plot_training_loss=False
+    ):
         """
         Class constructor.
         :param run_folder: Run folder path.
         :param execute_on: Execute callback on every nth batch/epoch.
         :param initial_epoch: Initial epoch index.
         :param vae: VAE model reference.
+        :param target_capacity: Target capacity to train for.
         :param plot_training_loss: Show loss plot during training.
         """
         self.epoch = initial_epoch
         self.run_folder = run_folder
         self.execute_on = execute_on
         self.vae = vae
+        self.target_capacity = target_capacity
         self.plot_training_loss = plot_training_loss
 
         # Plot data references.
@@ -87,6 +98,11 @@ class TrainingReferenceReconstructor(Callback):
         :param epoch: Epoch index.
         :param logs: Metric logs.
         """
+        # Capacity increment.
+        if self.target_capacity > 0:
+            sh_vars.CAPACITY += self.target_capacity/constants.EPOCHS
+
+        # Plot rules.
         if self.plot_training_loss:
             self.epochs.append(epoch)
 

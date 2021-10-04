@@ -30,19 +30,19 @@ print("Delta mode: " + str(constants.USE_DELTA) + ".")
 
 vae = VariationalAutoencoder(
     input_dim=constants.INPUT_DIM,
-    encoder_conv_filters=[32, 32, 64, 128, 256],
-    encoder_conv_kernel_size=[3, 3, 3, 3, 3],
-    encoder_conv_strides=[2, 1, 2, 2, 2],
-    decoder_conv_t_filters=[128, 64, 32, 32, 3],
-    decoder_conv_t_kernel_size=[3, 3, 3, 3, 3],
-    decoder_conv_t_strides=[2, 2, 2, 1, 2],
+    encoder_conv_filters=[32, 64, 128, 256],
+    encoder_conv_kernel_size=[3, 3, 3, 3],
+    encoder_conv_strides=[2, 2, 2, 2],
+    decoder_conv_t_filters=[128, 64, 32, 3],
+    decoder_conv_t_kernel_size=[3, 3, 3, 3],
+    decoder_conv_t_strides=[2, 2, 2, 2],
     z_dim=constants.Z_DIM,
     dense_units=[500, 250, 125, 64, 32],
     use_batch_norm=True,
     use_dropout=True,
     discriminative=constants.DISCRIMINATIVE,
     gamma=constants.GAMMA,
-    capacity=constants.CAPACITY,
+    target_capacity=constants.TARGET_CAPACITY,
     use_delta=constants.USE_DELTA
 )
 

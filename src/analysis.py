@@ -329,7 +329,7 @@ args = parser.parse_args()
 
 if args.vector_transition and args.column and args.label:
     print("Vector transition mode launched.")
-    print("Simulating " + args.label + " vector transition...")
+    print("Simulating " + args.column + "=" + args.label + " vector transition...")
     found_vec = get_vector_by_label(args.column, args.label, args.neutral_label, constants.ANALYSIS_BATCH_SIZE)
     add_vector_to_images(found_vec, args.samples, args.f_target, args.f_steps)
 elif args.vector_lookup and args.column and args.label:
