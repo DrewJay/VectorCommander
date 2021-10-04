@@ -17,7 +17,7 @@ class TrainingReferenceReconstructor(Callback):
             initial_epoch,
             vae,
             target_capacity,
-            plot_training_loss=False
+            plot_training_loss=False,
     ):
         """
         Class constructor.
@@ -100,7 +100,7 @@ class TrainingReferenceReconstructor(Callback):
         """
         # Capacity increment.
         if self.target_capacity > 0:
-            sh_vars.CAPACITY += self.target_capacity/constants.EPOCHS
+            sh_vars.CAPACITY += self.target_capacity / constants.EPOCHS
 
         # Plot rules.
         if self.plot_training_loss:
