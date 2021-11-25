@@ -35,6 +35,8 @@ def show_distributions():
     for i in range(50):
         # 5 x 10 grid.
         vector_display = fig.add_subplot(5, 10, i + 1)
+        # This is not the right way to do it. Multivariate gaussian has to have independent members.
+        # Therefore the right way is z_test[:, i].
         vector_display.hist(z_test[i], density=True, bins=20)
         vector_display.text(0.5, -0.35, "Vector " + str(i), c="red", fontsize=10, ha="center", transform=vector_display.transAxes)
         # pdf returns ys that represent bell curve itself in order, random_normal returns ys that follow
