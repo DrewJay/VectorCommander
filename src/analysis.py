@@ -319,7 +319,7 @@ parser.add_argument("--vector_reconstruction", help="Reconstruct vectors into or
 parser.add_argument("--random_samples", help="Show samples drawn randomly from latent space.", action="store_true")
 parser.add_argument("--column", help="CSV column name to seek label in.")
 parser.add_argument("--label", help="Value of the column.")
-parser.add_argument("--neutral_label", help="Label that doesn't include target state.", type=str, default=-1)
+parser.add_argument("--neutral_label", help="Label that doesn't include target state.", type=str, default="No Finding")
 parser.add_argument("--f_target", help="Target value of factorization.", type=int, default=5)
 parser.add_argument("--f_steps", help="Total amount of factorization steps between 0 and {factor_target}.", type=int,
                     default=6)

@@ -5,6 +5,7 @@ src/models/__pycache__
 src/utils/__pycache__
 src/shared/__pycache__
 src/settings/__pycache__
+src/gantrain.py
 src/test.py
 test.py
 .idea

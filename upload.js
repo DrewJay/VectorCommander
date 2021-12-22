@@ -20,7 +20,7 @@ fse.copy('run/analysis', analysisPath, (err) => {
         fse.copy('run/vae/1_output/model', modelPath, (_err) => {
             if (!_err) {
                 console.log('File copying successful.');
-                exec('cd ../Progrezz & aws s3 mv neural s3://arn:aws:s3:us-east-2:277059337208:accesspoint/get-data --recursive', (error, stdout, stderr) => {
+                exec('cd ../Progrezz & aws s3 mv neural s3://arn:aws:s3:us-east-2:277059337208:accesspoint/virtual-cloud-s3-repository --recursive', (error, stdout, stderr) => {
                     console.log(error, stdout, stderr);
                 });
             }

@@ -10,9 +10,9 @@ VECTOR_FOLDER = "run/analysis/label_vectors/"
 NETWORK_VISUALIZATION_FOLDER_NAME = "architecture"
 SAMPLE_RESULTS_FOLDER_NAME = "generatedSamples"
 
-CSV_NAME = "list_attr_celeba.csv"
-CSV_X_COL = "image_id"
-DATA_EXTENSION = "jpg"
+CSV_NAME = "Data_Entry_2017_v2020.csv"
+CSV_X_COL = "Image Index"
+DATA_EXTENSION = "png"
 
 # Model metadata.
 LEARNING_RATE = 0.001
@@ -34,5 +34,5 @@ ANALYSIS_BATCH_SIZE = 300
 
 # Various config.
 DISCRIMINATIVE = False
-USE_DELTA = False
-PLOT_TRAINING_LOSS = True
+USE_DELTA = True
+PLOT_TRAINING_LOSS = False
