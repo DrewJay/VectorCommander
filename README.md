@@ -38,7 +38,7 @@ VAEs are Adversarial AutoEncoders, which don't use KL Divergence to measure qual
 but discriminator model being taught that generated PD is "fake" while standard normal distribution is "real". AAEs yield
 better results by generating more organized latent space.
 
-Vector-Quantized Variational Encoder (VQ-VAE) is another widely accepted improvement to some of the VAE training objectives. VQ-VAE maps latent vector onto embedding collection (also caled "codebook"), by measuring l2 distance between latent representation and closes embedding vector.
+Vector-Quantized Variational Encoder (VQ-VAE) is another widely accepted improvement to some of the VAE training objectives. VQ-VAE maps latent vector onto embedding collection (also caled "codebook"), by measuring l2 distance between latent representation and the closest embedding vector.
 
 ## Usage
 You can train your model by choosing your own configuration in src/settings/constants.py
