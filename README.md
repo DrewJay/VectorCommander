@@ -42,9 +42,9 @@ Vector-Quantized Variational Encoder (VQ-VAE) is another widely accepted improve
 
 ## Usage
 You can train your model by choosing your own configuration in src/settings/constants.py
-and then running src/main.py.
+and then running `src/main.py`.
 
-File src/analysis.py contains implementations that utilize trained model and generate
+File `src/analysis.py` contains implementations that utilize trained model and generate
 visual results using matplotlib. It accepts following arguments:
 
 Argument | Description | Type | Default value |
