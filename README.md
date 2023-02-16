@@ -36,7 +36,7 @@ reconstruction loss, for example pretrained image recognition model.
 Another better performing alternative to classical
 VAEs are Adversarial AutoEncoders, which don't use KL Divergence to measure quality of generated probability distribution,
 but discriminator model being taught that generated PD is "fake" while standard normal distribution is "real". AAEs yield
-better results by generating more organized latent space.
+better results by generating more compact latent spaces.
 
 Vector-Quantized Variational Encoder (VQ-VAE) is another widely accepted improvement to some of the VAE training objectives. VQ-VAE maps latent vector onto embedding collection (also caled "codebook"), by measuring l2 distance between latent representation and the closest embedding vector.
 
