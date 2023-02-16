@@ -1,5 +1,5 @@
 <p align="center">
-    <img width="200" src="/applogo.png"/>
+    <img width="200" src="/vclogo.png"/>
 </p>
 
 # VectorCommander
