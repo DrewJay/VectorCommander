@@ -2,7 +2,7 @@
     <img width="200" src="/vclogo.png"/>
 </p>
 
-# VectorCommander
+# Vector Commander
 
 This project includes configurable Variational Autoencoder which can be customized and trained. It is implemented using modern approaches, like
 discriminative regularization, <a href="https://arxiv.org/abs/1512.03385">residual convolutional blocks</a>, <a href="https://arxiv.org/pdf/1804.03599.pdf">gamma Lagrange multiplier with capacity.</a> It also uses experimental techniques like delta-factorization of Gaussian multivariate.
